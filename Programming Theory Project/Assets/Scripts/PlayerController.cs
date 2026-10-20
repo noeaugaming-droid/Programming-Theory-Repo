@@ -32,7 +32,6 @@ public class PlayerController : MonoBehaviour
     void FixedUpdate()
     {
         PlayerMove();
-        
     }
 
     void PlayerInputs()
@@ -40,15 +39,16 @@ public class PlayerController : MonoBehaviour
         horIn = Input.GetAxis("Horizontal");
         vertIn = Input.GetAxis("Vertical");
         mouseX = Input.GetAxis("Mouse X");
-        
     }
 
     void PlayerMove()
     {
+        Vector3 forwardMovement = transform.forward * vertIn;
+        Vector3 sidewaysMovement = transform.right * horIn;
+        Vector3 direction = forwardMovement + sidewaysMovement;
+        direction = direction.normalized;
 
-        Vector3 direction =
-            new Vector3(horIn, 0f, vertIn);
-        playerRb.linearVelocity = new Vector3(direction.x * speed, playerRb.linearVelocity.y, direction.z);
+        playerRb.linearVelocity = new Vector3(direction.x * speed, playerRb.linearVelocity.y, direction.z * speed);
     }
 
     void MouseLookH()
