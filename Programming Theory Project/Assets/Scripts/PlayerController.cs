@@ -8,7 +8,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] float speed = 10f;
     [Header("Mouse")]
     [SerializeField] float mouseSensitivity = 2f;
-    [SerializeField] GameObject camera;
+    
     private float horIn;
     private float vertIn;
     private float mouseX;

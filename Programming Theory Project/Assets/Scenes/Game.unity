@@ -131,7 +131,7 @@ GameObject:
   - component: {fileID: 115485656}
   - component: {fileID: 115485655}
   - component: {fileID: 115485654}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Wall_North
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -360,7 +360,7 @@ GameObject:
   - component: {fileID: 221849331}
   - component: {fileID: 221849330}
   - component: {fileID: 221849329}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Wall_West
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -456,6 +456,54 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 221849327}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &311949417
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 311949418}
+  - component: {fileID: 311949419}
+  m_Layer: 0
+  m_Name: Pivot
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &311949418
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 311949417}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 1, y: 0, z: 3}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 961739753}
+  m_Father: {fileID: 608680343}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &311949419
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 311949417}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3dd7506fe73b52b4797b0894468208d1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  mouseSensitivity: 2
+  minRotation: -60
+  maxRotation: 60
 --- !u!1 &608680338
 GameObject:
   m_ObjectHideFlags: 0
@@ -594,6 +642,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1567951339}
+  - {fileID: 311949418}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &608680344
@@ -610,7 +659,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   speed: 10
   mouseSensitivity: 2
-  camera: {fileID: 0}
 --- !u!1 &754635742
 GameObject:
   m_ObjectHideFlags: 0
@@ -779,11 +827,11 @@ Transform:
   m_GameObject: {fileID: 961739749}
   serializedVersion: 2
   m_LocalRotation: {x: 0.043619405, y: -0, z: -0, w: 0.9990483}
-  m_LocalPosition: {x: 1, y: 2, z: -3}
+  m_LocalPosition: {x: 0, y: 1, z: -6}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 311949418}
   m_LocalEulerAnglesHint: {x: 5, y: 0, z: 0}
 --- !u!114 &961739754
 MonoBehaviour:
@@ -794,12 +842,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 961739749}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3dd7506fe73b52b4797b0894468208d1, type: 3}
+  m_Script: {fileID: 11500000, guid: f150dbe19c54a01439f4b08d4e779ba0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  player: {fileID: 608680338}
-  offset: {x: 1, y: 1, z: -3}
-  rotationOffset: {x: 5, y: 0, z: 0}
+  wallLayer:
+    serializedVersion: 2
+    m_Bits: 8
+  wallDistance: 0.2
+  cameraRadius: 0.5
 --- !u!1 &1118337977
 GameObject:
   m_ObjectHideFlags: 0
@@ -812,7 +862,7 @@ GameObject:
   - component: {fileID: 1118337981}
   - component: {fileID: 1118337980}
   - component: {fileID: 1118337979}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Ground
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1007,7 +1057,7 @@ GameObject:
   - component: {fileID: 1710149028}
   - component: {fileID: 1710149027}
   - component: {fileID: 1710149026}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Wall_East
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1115,7 +1165,7 @@ GameObject:
   - component: {fileID: 2088530858}
   - component: {fileID: 2088530857}
   - component: {fileID: 2088530856}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Wall_SOuth
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1217,5 +1267,4 @@ SceneRoots:
   m_Roots:
   - {fileID: 203844589}
   - {fileID: 754635743}
-  - {fileID: 961739753}
   - {fileID: 608680343}
