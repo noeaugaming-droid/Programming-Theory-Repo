@@ -8,6 +8,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] float speed = 10f;
     [Header("Mouse")]
     [SerializeField] float mouseSensitivity = 2f;
+    [SerializeField] GameObject camera;
     private float horIn;
     private float vertIn;
     private float mouseX;
@@ -55,6 +56,7 @@ public class PlayerController : MonoBehaviour
     {
         Vector3 horizontalLook = new Vector3(0, mouseX, 0);
         playerRb.transform.Rotate(horizontalLook * mouseSensitivity);
+       
     }
 
 
