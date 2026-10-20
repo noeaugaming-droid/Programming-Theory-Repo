@@ -1,22 +1,24 @@
-using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
+
+    //==_Floats_==//
     [Header("Movement")]
     [SerializeField] float speed = 10f;
-    
-    private Rigidbody playerRb;
-
-
+    [Header("Mouse")]
+    [SerializeField] float mouseSensitivity = 2f;
     private float horIn;
     private float vertIn;
     private float mouseX;
-    private float mouseY;
 
+    //==_Type_References_==//
+    private Rigidbody playerRb;
 
     void Start()
     {
+        Cursor.visible = false;
+        Cursor.lockState = CursorLockMode.Locked;
         playerRb = GetComponent<Rigidbody>();
     }
 
@@ -24,11 +26,13 @@ public class PlayerController : MonoBehaviour
     void Update()
     {
         PlayerInputs();
+        MouseLookH();
     }
 
     void FixedUpdate()
     {
-
+        PlayerMove();
+        
     }
 
     void PlayerInputs()
@@ -36,14 +40,23 @@ public class PlayerController : MonoBehaviour
         horIn = Input.GetAxis("Horizontal");
         vertIn = Input.GetAxis("Vertical");
         mouseX = Input.GetAxis("Mouse X");
-        mouseY = Input.GetAxis("Mouse Y");
+        
     }
 
     void PlayerMove()
     {
 
-        Vector3 direction = new Vector3(horIn, transform.position.y, vertIn);
-        playerRb.linearVelocity = direction * speed;
+        Vector3 direction =
+            new Vector3(horIn, 0f, vertIn);
+        playerRb.linearVelocity = new Vector3(direction.x * speed, playerRb.linearVelocity.y, direction.z);
     }
+
+    void MouseLookH()
+    {
+        Vector3 horizontalLook = new Vector3(0, mouseX, 0);
+        playerRb.transform.Rotate(horizontalLook * mouseSensitivity);
+    }
+
+
 
 }
