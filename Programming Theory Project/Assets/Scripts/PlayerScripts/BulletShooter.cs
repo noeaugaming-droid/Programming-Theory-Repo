@@ -72,20 +72,24 @@ public class BulletShooter : MonoBehaviour
 
                 Debug.Log("Bullet hit: " + hit.collider.gameObject.name);
                 Enemy enemy = hit.collider.GetComponentInParent<Enemy>();
-                if(enemy != null)
+
+                if (enemy != null)
                 {
                     Spider spider = enemy as Spider;
+
                     if (spider != null)
                     {
                         spider.Knockback(direction);
                     }
-                    enemy.TakeDamage(20f);
-                }
-                Beetle beetle = enemy as Beetle;
 
-                if (beetle != null)
-                {
-                    beetle.Knockback(direction);
+                    Beetle beetle = enemy as Beetle;
+
+                    if (beetle != null)
+                    {
+                        beetle.Knockback(direction);
+                    }
+
+                    enemy.TakeDamage(20f);
                 }
                 Debug.DrawLine(bullet.transform.position, hit.point, Color.red, 2f);
 
