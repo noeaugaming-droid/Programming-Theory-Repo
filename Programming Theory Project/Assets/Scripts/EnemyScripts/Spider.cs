@@ -12,6 +12,7 @@ public class Spider : Enemy
     void FixedUpdate()
     {
         Move();
+        
     }
     void Move()
     {
@@ -19,7 +20,16 @@ public class Spider : Enemy
         direction.y = 0;
 
         direction.Normalize();
+
+        Vector3 targetPosition = new Vector3(
+            player.position.x,
+            transform.position.y,
+            player.position.z
+            );
+        transform.LookAt(targetPosition);
         spiderRb.MovePosition(spiderRb.position + direction * 5f * Time.fixedDeltaTime);
+
+      
     }
 
 }
