@@ -20,8 +20,9 @@ public class Spider : Enemy
     void Start()
     {
         spiderRb = GetComponent<Rigidbody>();
+        player = GameObject.FindGameObjectWithTag("Player").transform;
         playerHealth = player.GetComponent<PlayerHealth>();
-        
+
     }
     void Update()
     {
