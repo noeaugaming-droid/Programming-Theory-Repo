@@ -1617,6 +1617,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1072972700}
+  - component: {fileID: 1072972702}
+  - component: {fileID: 1072972701}
   m_Layer: 0
   m_Name: SpiderParent
   m_TagString: Untagged
@@ -1640,6 +1642,49 @@ Transform:
   - {fileID: 2031712810}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1072972701
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1072972699}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ca6c06d514a245e4eb6d7544b529e9a5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  health: 100
+  speed: 5
+  damage: 10
+  player: {fileID: 608680343}
+--- !u!54 &1072972702
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1072972699}
+  serializedVersion: 4
+  m_Mass: 5
+  m_Drag: 0
+  m_AngularDrag: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 1
+  m_IsKinematic: 0
+  m_Interpolate: 1
+  m_Constraints: 112
+  m_CollisionDetection: 0
 --- !u!1 &1074672428
 GameObject:
   m_ObjectHideFlags: 0
@@ -2656,7 +2701,6 @@ GameObject:
   - component: {fileID: 2031712814}
   - component: {fileID: 2031712813}
   - component: {fileID: 2031712812}
-  - component: {fileID: 2031712811}
   m_Layer: 0
   m_Name: SpiderBody
   m_TagString: Untagged
@@ -2689,33 +2733,6 @@ Transform:
   - {fileID: 404372121}
   m_Father: {fileID: 1072972700}
   m_LocalEulerAnglesHint: {x: 90, y: 0, z: -180}
---- !u!54 &2031712811
-Rigidbody:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2031712809}
-  serializedVersion: 4
-  m_Mass: 5
-  m_Drag: 0
-  m_AngularDrag: 0.05
-  m_CenterOfMass: {x: 0, y: 0, z: 0}
-  m_InertiaTensor: {x: 1, y: 1, z: 1}
-  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ImplicitCom: 1
-  m_ImplicitTensor: 1
-  m_UseGravity: 1
-  m_IsKinematic: 0
-  m_Interpolate: 0
-  m_Constraints: 0
-  m_CollisionDetection: 0
 --- !u!136 &2031712812
 CapsuleCollider:
   m_ObjectHideFlags: 0
