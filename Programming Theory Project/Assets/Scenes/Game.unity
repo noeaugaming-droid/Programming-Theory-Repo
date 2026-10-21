@@ -1399,6 +1399,7 @@ MonoBehaviour:
   health: 100
   healthText: {fileID: 1709969886}
   gameOverPanel: {fileID: 1210839302}
+  hud: {fileID: 170728145}
   isDead: 0
 --- !u!1 &679514825
 GameObject:
@@ -1432,6 +1433,7 @@ MonoBehaviour:
   titlePanel: {fileID: 1737997247}
   playerController: {fileID: 608680344}
   cameraLook: {fileID: 311949419}
+  hud: {fileID: 170728145}
 --- !u!4 &679514827
 Transform:
   m_ObjectHideFlags: 0
