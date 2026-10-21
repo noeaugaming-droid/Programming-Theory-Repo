@@ -2,6 +2,7 @@ using UnityEngine;
 
 public class Spider : Enemy
 {
+    PlayerHealth playerHealth;
     [SerializeField] Transform player;
     Rigidbody spiderRb;
 
@@ -19,6 +20,7 @@ public class Spider : Enemy
     void Start()
     {
         spiderRb = GetComponent<Rigidbody>();
+        playerHealth = player.GetComponent<PlayerHealth>();
         
     }
     void Update()
@@ -82,7 +84,9 @@ public class Spider : Enemy
     }
     public override void Attack()
     {
+        playerHealth.TakeDamage(10f);
         Debug.Log("Spider Attacks");
+
     }
 
 
