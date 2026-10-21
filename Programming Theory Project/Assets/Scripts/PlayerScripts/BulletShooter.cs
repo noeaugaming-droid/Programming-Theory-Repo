@@ -81,6 +81,12 @@ public class BulletShooter : MonoBehaviour
                     }
                     enemy.TakeDamage(20f);
                 }
+                Beetle beetle = enemy as Beetle;
+
+                if (beetle != null)
+                {
+                    beetle.Knockback(direction);
+                }
                 Debug.DrawLine(bullet.transform.position, hit.point, Color.red, 2f);
 
                 break;

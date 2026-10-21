@@ -7,6 +7,9 @@ public class Beetle : Enemy
     [SerializeField] float attackRange = 3f;
     [SerializeField] float attackCooldown = 2f;
     [SerializeField] float chargeForce = 15f;
+    [SerializeField] float knockbackForce = 10f;
+    bool isKnockedBack = false;
+    float knockbackTimer = 0f;
     float attackTimer = 0f;
     PlayerHealth playerHealth;
     void Start()
@@ -28,6 +31,7 @@ public class Beetle : Enemy
         {
             Vector3 direction = player.position - transform.position;
             direction.y = 0;
+            transform.rotation = Quaternion.LookRotation(direction) * Quaternion.Euler(90, 0, 0);
 
             beetleRb.MovePosition(transform.position + direction.normalized * speed * Time.fixedDeltaTime);
         }
@@ -48,5 +52,12 @@ public class Beetle : Enemy
 
         playerHealth.TakeDamage(damage);
         Debug.Log("Beetle attacks!");
+    }
+    public void Knockback(Vector3 direction)
+    {
+        beetleRb.AddForce(direction * knockbackForce, ForceMode.Impulse);
+
+        isKnockedBack = true;
+        knockbackTimer = 0.3f;
     }
 }

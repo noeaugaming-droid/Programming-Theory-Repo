@@ -5,6 +5,7 @@ public class EnemySpawner : MonoBehaviour
 {
     [SerializeField] TMP_Text waveText;
     [SerializeField] GameObject spiderPrefab;
+    [SerializeField] GameObject beetlePrefab;
     [SerializeField] float spawnRange = 10f;
     [SerializeField] int enemyCount = 3;
 
@@ -40,7 +41,15 @@ public class EnemySpawner : MonoBehaviour
             float randomZ = Random.Range(-spawnRange, spawnRange);
 
             Vector3 spawnPosition = transform.position + new Vector3(randomX, 0, randomZ);
-            Instantiate(spiderPrefab, spawnPosition, Quaternion.identity);
+            int randomEnemy = Random.Range(0, 2);
+            if (randomEnemy == 0)
+            {
+                Instantiate(beetlePrefab, spawnPosition, beetlePrefab.transform.rotation);
+            }
+            else
+            {
+                Instantiate(beetlePrefab, spawnPosition, beetlePrefab.transform.rotation);
+            }
         }
     }
 }
