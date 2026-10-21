@@ -1,21 +1,26 @@
 using UnityEngine;
+using TMPro;
 
 public class EnemySpawner : MonoBehaviour
 {
+    [SerializeField] TMP_Text waveText;
     [SerializeField] GameObject spiderPrefab;
     [SerializeField] float spawnRange = 10f;
     [SerializeField] int enemyCount = 3;
+
     int waveNumber = 1;
+    PlayerHealth playerHealth;
 
 
     void Start()
     {
+        playerHealth = FindAnyObjectByType<PlayerHealth>();
         SpawnWave();
 
     }
     void Update()
     {
-        if (FindObjectsByType<Enemy>(FindObjectsSortMode.None).Length == 0)
+        if (!playerHealth.isDead && FindObjectsByType<Enemy>(FindObjectsSortMode.None).Length == 0)
         {
             waveNumber++;
             enemyCount++;
@@ -26,6 +31,7 @@ public class EnemySpawner : MonoBehaviour
 
     void SpawnWave()
     {
+        waveText.text = "Wave: " + waveNumber;
         for (int i = 0; i < enemyCount; i++)
         {
 
