@@ -1,16 +1,24 @@
 using UnityEngine;
+using TMPro;
 
 public class PlayerHealth : MonoBehaviour
 {
     [SerializeField] float health = 100f;
+    [SerializeField] TMP_Text healthText;
 
     public bool isDead = false;
+
+    void Start()
+    {
+        UpdateHealthText();
+    }
 
     public void TakeDamage(float damageAmount)
     {
         if (!isDead)
         {
             health -= damageAmount;
+            UpdateHealthText();
 
             Debug.Log("Player Health: " + health);
 
@@ -24,5 +32,9 @@ public class PlayerHealth : MonoBehaviour
                 GetComponentInChildren<BulletShooter>().enabled = false;
             }
         }
+    }
+    void UpdateHealthText()
+    {
+        healthText.text = "Health: " + health;
     }
 }
