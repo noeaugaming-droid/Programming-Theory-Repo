@@ -59,9 +59,9 @@ public class Spider : Enemy
             player.position.z
             );
         transform.LookAt(targetPosition);
-        spiderRb.MovePosition(spiderRb.position + direction * 5f * Time.fixedDeltaTime);
+        spiderRb.MovePosition(spiderRb.position + direction * speed * Time.fixedDeltaTime);
 
-      
+
     }
     void CheckAttack()
     {
