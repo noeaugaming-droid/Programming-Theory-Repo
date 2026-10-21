@@ -71,6 +71,11 @@ public class BulletShooter : MonoBehaviour
                 bullet.transform.position = hit.point;
 
                 Debug.Log("Bullet hit: " + hit.collider.gameObject.name);
+                Enemy enemy = hit.collider.GetComponentInParent<Enemy>();
+                if(enemy != null)
+                {
+                    enemy.TakeDamage(20f);
+                }
                 Debug.DrawLine(bullet.transform.position, hit.point, Color.red, 2f);
 
                 break;
@@ -83,6 +88,7 @@ public class BulletShooter : MonoBehaviour
 
             yield return null;
         }
+        
 
         // Remove bullet when finished
         Destroy(bullet);
