@@ -1658,6 +1658,8 @@ MonoBehaviour:
   speed: 5
   damage: 10
   player: {fileID: 608680343}
+  attackRange: 3
+  attackDelay: 2
 --- !u!54 &1072972702
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -3032,5 +3034,5 @@ SceneRoots:
   - {fileID: 203844589}
   - {fileID: 754635743}
   - {fileID: 608680343}
-  - {fileID: 152783147}
   - {fileID: 1072972700}
+  - {fileID: 152783147}

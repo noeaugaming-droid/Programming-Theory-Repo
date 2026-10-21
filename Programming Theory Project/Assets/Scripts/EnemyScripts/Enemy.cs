@@ -9,10 +9,11 @@ public abstract class Enemy : MonoBehaviour
     public void TakeDamage(float damageAmount)
     {
         health -= damageAmount;
-        if(health <= 0)
+        if (health <= 0)
         {
             Destroy(gameObject);
         }
     }
+    public abstract void Attack();
 }
 
