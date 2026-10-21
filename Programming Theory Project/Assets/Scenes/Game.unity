@@ -1660,6 +1660,8 @@ MonoBehaviour:
   player: {fileID: 608680343}
   attackRange: 3
   attackDelay: 2
+  knockbackDuration: 1
+  knockbackForce: 50
 --- !u!54 &1072972702
 Rigidbody:
   m_ObjectHideFlags: 0

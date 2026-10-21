@@ -74,6 +74,11 @@ public class BulletShooter : MonoBehaviour
                 Enemy enemy = hit.collider.GetComponentInParent<Enemy>();
                 if(enemy != null)
                 {
+                    Spider spider = enemy as Spider;
+                    if (spider != null)
+                    {
+                        spider.Knockback(direction);
+                    }
                     enemy.TakeDamage(20f);
                 }
                 Debug.DrawLine(bullet.transform.position, hit.point, Color.red, 2f);

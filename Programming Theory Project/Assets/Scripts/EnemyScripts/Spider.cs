@@ -7,6 +7,14 @@ public class Spider : Enemy
 
     [SerializeField] float attackRange = 3f;
     [SerializeField] float attackDelay = 2f;
+
+    [Header("Knockback")]
+    [SerializeField] float knockbackDuration = 0.3f;
+    [SerializeField] float knockbackForce = 10f;
+    bool isKnockedBack = false;
+    float knockbackTimer = 0f;
+
+   
     float attackTimer = 0f;
     void Start()
     {
@@ -21,10 +29,21 @@ public class Spider : Enemy
 
     void FixedUpdate()
     {
-        float distance = Vector3.Distance(transform.position, player.position);
-        if (distance > attackRange)
+        if (isKnockedBack)
         {
-            Move();
+            knockbackTimer -= Time.fixedDeltaTime;
+            if (knockbackTimer <= 0)
+            {
+                isKnockedBack = false;
+            }
+        }
+        else
+        {
+            float distance = Vector3.Distance(transform.position, player.position);
+            if (distance > attackRange)
+            {
+                Move();
+            }
         }
     }
     void Move()
@@ -54,6 +73,12 @@ public class Spider : Enemy
             attackTimer = 0f;
         }
 
+    }
+    public void Knockback(Vector3 direction)
+    {
+        spiderRb.AddForce(direction * knockbackForce, ForceMode.Impulse);
+        isKnockedBack = true;
+        knockbackTimer = knockbackDuration;
     }
     public override void Attack()
     {
