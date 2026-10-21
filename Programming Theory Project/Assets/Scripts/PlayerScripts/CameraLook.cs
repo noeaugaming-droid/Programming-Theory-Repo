@@ -1,27 +1,19 @@
-
 using UnityEngine;
 
 public class CameraLook : MonoBehaviour
 {
     [Header("Mouse Settings")]
-    [SerializeField] float mouseSensitivity = 2f;
-    [SerializeField] float minRotation = -60f;
-    [SerializeField] float maxRotation = 60f;
+    [SerializeField] private float mouseSensitivity = 2f;
+    [SerializeField] private float minRotation = -60f;
+    [SerializeField] private float maxRotation = 60f;
 
-    float mouseY;
-    float verticalRotation;
+    private float verticalRotation;
 
     void Update()
     {
-        // Get vertical mouse movement
-        mouseY = Input.GetAxis("Mouse Y");
-
-        // Rotate camera up and down
+        float mouseY = Input.GetAxis("Mouse Y");
         verticalRotation -= mouseY * mouseSensitivity;
-
-        // Limit how far the camera can rotate
         verticalRotation = Mathf.Clamp(verticalRotation, minRotation, maxRotation);
-
-        transform.localRotation = Quaternion.Euler(verticalRotation, 0, 0);
+        transform.localRotation = Quaternion.Euler(verticalRotation, 0f, 0f);
     }
 }

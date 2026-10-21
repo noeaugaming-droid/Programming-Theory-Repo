@@ -3,44 +3,47 @@ using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
-    [SerializeField] GameObject titlePanel;
-    [SerializeField] PlayerController playerController;
-    [SerializeField] CameraLook cameraLook;
-    [SerializeField] GameObject hud;
+    [SerializeField] private GameObject titlePanel;
+    [SerializeField] private GameObject hud;
+    [SerializeField] private PlayerController playerController;
+    [SerializeField] private CameraLook cameraLook;
+    [SerializeField] private BulletShooter bulletShooter;
 
-    static bool gameStarted = false;
+    private static bool gameStarted;
 
-    void Start()
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetGameStarted()
+    {
+        gameStarted = false;
+    }
+
+    void Awake()
     {
         titlePanel.SetActive(!gameStarted);
+        hud.SetActive(gameStarted);
+        Time.timeScale = gameStarted ? 1f : 0f;
 
-        if (!gameStarted)
-        {
-            Time.timeScale = 0f;
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
-            playerController.enabled = false;
-            cameraLook.enabled = false;
-        }
-        else
-        {
-            Time.timeScale = 1f;
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
-        }
+        playerController.enabled = gameStarted;
+        cameraLook.enabled = gameStarted;
+        bulletShooter.enabled = gameStarted;
+
+        Cursor.lockState = gameStarted ? CursorLockMode.Locked : CursorLockMode.None;
+        Cursor.visible = !gameStarted;
     }
 
     public void StartGame()
     {
         gameStarted = true;
         titlePanel.SetActive(false);
-
+        hud.SetActive(true);
         Time.timeScale = 1f;
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
+
         playerController.enabled = true;
         cameraLook.enabled = true;
-        hud.SetActive(true);
+        bulletShooter.enabled = true;
+
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
     }
 
     public void RestartGame()

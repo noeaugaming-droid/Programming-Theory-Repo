@@ -3,29 +3,29 @@ using TMPro;
 
 public class EnemySpawner : MonoBehaviour
 {
-    [SerializeField] TMP_Text waveText;
-    [SerializeField] GameObject spiderPrefab;
-    [SerializeField] GameObject beetlePrefab;
-    [SerializeField] float spawnRange = 10f;
-    [SerializeField] int enemyCount = 3;
+    [SerializeField] private TMP_Text waveText;
+    [SerializeField] private GameObject spiderPrefab;
+    [SerializeField] private GameObject beetlePrefab;
+    [SerializeField] private float spawnRange = 10f;
+    [SerializeField] private int enemyCount = 3;
 
-    int waveNumber = 1;
-    PlayerHealth playerHealth;
-
+    private int waveNumber = 1;
+    private PlayerHealth playerHealth;
 
     void Start()
     {
         playerHealth = FindAnyObjectByType<PlayerHealth>();
         SpawnWave();
-
     }
+
     void Update()
     {
-        if (!playerHealth.isDead && FindObjectsByType<Enemy>(FindObjectsSortMode.None).Length == 0)
+        if (playerHealth.isDead) return;
+
+        if (FindObjectsByType<Enemy>(FindObjectsSortMode.None).Length == 0)
         {
             waveNumber++;
             enemyCount++;
-            Debug.Log("Wave Complete!");
             SpawnWave();
         }
     }
@@ -33,19 +33,17 @@ public class EnemySpawner : MonoBehaviour
     void SpawnWave()
     {
         waveText.text = "Wave: " + waveNumber;
+
         for (int i = 0; i < enemyCount; i++)
         {
-
-
             float randomX = Random.Range(-spawnRange, spawnRange);
             float randomZ = Random.Range(-spawnRange, spawnRange);
+            Vector3 spawnPosition = transform.position + new Vector3(randomX, 0f, randomZ);
 
-            Vector3 spawnPosition = transform.position + new Vector3(randomX, 0, randomZ);
             int randomEnemy = Random.Range(0, 2);
-            Debug.Log("Enemy selected: " + randomEnemy);
             if (randomEnemy == 0)
             {
-                Instantiate(spiderPrefab, spawnPosition, beetlePrefab.transform.rotation);
+                Instantiate(spiderPrefab, spawnPosition, spiderPrefab.transform.rotation);
             }
             else
             {

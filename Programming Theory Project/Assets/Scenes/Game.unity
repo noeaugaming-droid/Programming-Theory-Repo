@@ -1431,9 +1431,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   titlePanel: {fileID: 1737997247}
+  hud: {fileID: 170728145}
   playerController: {fileID: 608680344}
   cameraLook: {fileID: 311949419}
-  hud: {fileID: 170728145}
+  bulletShooter: {fileID: 608680345}
 --- !u!4 &679514827
 Transform:
   m_ObjectHideFlags: 0

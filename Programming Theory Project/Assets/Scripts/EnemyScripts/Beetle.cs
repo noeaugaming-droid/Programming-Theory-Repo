@@ -2,75 +2,69 @@ using UnityEngine;
 
 public class Beetle : Enemy
 {
-    Transform player;
-    Rigidbody beetleRb;
-    [SerializeField] float attackRange = 3f;
-    [SerializeField] float attackCooldown = 2f;
-    [SerializeField] float chargeForce = 15f;
-    [SerializeField] float knockbackForce = 10f;
-    bool isKnockedBack = false;
-    float knockbackTimer = 0f;
-    float attackTimer = 0f;
-    PlayerHealth playerHealth;
+    [Header("Attack")]
+    [SerializeField] private float attackRange = 3f;
+    [SerializeField] private float attackCooldown = 2f;
+    [SerializeField] private float chargeForce = 15f;
+
+    [Header("Knockback")]
+    [SerializeField] private float knockbackForce = 10f;
+    [SerializeField] private float knockbackDuration = 0.3f;
+
+    private Transform player;
+    private PlayerHealth playerHealth;
+    private Rigidbody beetleRb;
+    private float attackTimer;
+    private float knockbackTimer;
+
     void Start()
     {
-        player = GameObject.FindGameObjectWithTag("Player").transform;
-        playerHealth = player.GetComponent<PlayerHealth>();
+        GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
+        player = playerObject.transform;
+        playerHealth = playerObject.GetComponent<PlayerHealth>();
         beetleRb = GetComponent<Rigidbody>();
     }
+
     void FixedUpdate()
     {
-        if (playerHealth.isDead)
+        if (playerHealth.isDead) return;
+
+        attackTimer -= Time.fixedDeltaTime;
+
+        if (knockbackTimer > 0f)
         {
+            knockbackTimer -= Time.fixedDeltaTime;
             return;
         }
 
-        float distance = Vector3.Distance(transform.position, player.position);
-        attackTimer -= Time.fixedDeltaTime;
+        Vector3 direction = player.position - beetleRb.position;
+        direction.y = 0f;
 
-        if (isKnockedBack)
+        if (direction.magnitude > attackRange)
         {
-            knockbackTimer -= Time.fixedDeltaTime;
-
-            if (knockbackTimer <= 0)
-            {
-                isKnockedBack = false;
-            }
+            beetleRb.MoveRotation(Quaternion.LookRotation(direction) * Quaternion.Euler(90f, 0f, 0f));
+            beetleRb.MovePosition(beetleRb.position + direction.normalized * speed * Time.fixedDeltaTime);
         }
-        else if (distance > attackRange)
+        else if (attackTimer <= 0f)
         {
-            Vector3 direction = player.position - transform.position;
-            direction.y = 0;
-
-            transform.rotation = Quaternion.LookRotation(direction) * Quaternion.Euler(90, 0, 0);
-
-            beetleRb.MovePosition(transform.position + direction.normalized * speed * Time.fixedDeltaTime);
-        }
-        else if (attackTimer <= 0)
-        {
-            Enemy enemy = GetComponent<Enemy>();
+            Enemy enemy = this;
             enemy.Attack();
-
             attackTimer = attackCooldown;
         }
     }
 
-
     public override void Attack()
     {
-        Vector3 direction = player.position - transform.position;
-        direction.y = 0;
-
+        Vector3 direction = player.position - beetleRb.position;
+        direction.y = 0f;
         beetleRb.AddForce(direction.normalized * chargeForce, ForceMode.Impulse);
-
         playerHealth.TakeDamage(damage);
         Debug.Log("Beetle attacks!");
     }
+
     public void Knockback(Vector3 direction)
     {
-        beetleRb.AddForce(direction * knockbackForce, ForceMode.Impulse);
-
-        isKnockedBack = true;
-        knockbackTimer = 0.3f;
+        beetleRb.AddForce(direction.normalized * knockbackForce, ForceMode.Impulse);
+        knockbackTimer = knockbackDuration;
     }
 }
