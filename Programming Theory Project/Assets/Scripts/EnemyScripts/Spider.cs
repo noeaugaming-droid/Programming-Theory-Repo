@@ -31,6 +31,10 @@ public class Spider : Enemy
 
     void FixedUpdate()
     {
+        if (playerHealth.isDead)
+        {
+            return;
+        }
         if (isKnockedBack)
         {
             knockbackTimer -= Time.fixedDeltaTime;
@@ -69,7 +73,7 @@ public class Spider : Enemy
     {
         attackTimer += Time.deltaTime;
         float distance = Vector3.Distance(transform.position, player.position);
-        if(distance <= attackRange && attackTimer >= attackDelay)
+        if (distance <= attackRange && attackTimer >= attackDelay && !playerHealth.isDead)
         {
             Attack();
             attackTimer = 0f;
@@ -84,9 +88,8 @@ public class Spider : Enemy
     }
     public override void Attack()
     {
-        playerHealth.TakeDamage(10f);
+        playerHealth.TakeDamage(damage);
         Debug.Log("Spider Attacks");
-
     }
 
 
