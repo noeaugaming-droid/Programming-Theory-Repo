@@ -42,9 +42,10 @@ public class EnemySpawner : MonoBehaviour
 
             Vector3 spawnPosition = transform.position + new Vector3(randomX, 0, randomZ);
             int randomEnemy = Random.Range(0, 2);
+            Debug.Log("Enemy selected: " + randomEnemy);
             if (randomEnemy == 0)
             {
-                Instantiate(beetlePrefab, spawnPosition, beetlePrefab.transform.rotation);
+                Instantiate(spiderPrefab, spawnPosition, beetlePrefab.transform.rotation);
             }
             else
             {

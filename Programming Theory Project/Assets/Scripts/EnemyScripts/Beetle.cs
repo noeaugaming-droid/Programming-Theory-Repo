@@ -24,20 +24,33 @@ public class Beetle : Enemy
         {
             return;
         }
+
         float distance = Vector3.Distance(transform.position, player.position);
         attackTimer -= Time.fixedDeltaTime;
 
-        if (distance > attackRange)
+        if (isKnockedBack)
+        {
+            knockbackTimer -= Time.fixedDeltaTime;
+
+            if (knockbackTimer <= 0)
+            {
+                isKnockedBack = false;
+            }
+        }
+        else if (distance > attackRange)
         {
             Vector3 direction = player.position - transform.position;
             direction.y = 0;
+
             transform.rotation = Quaternion.LookRotation(direction) * Quaternion.Euler(90, 0, 0);
 
             beetleRb.MovePosition(transform.position + direction.normalized * speed * Time.fixedDeltaTime);
         }
-        else if (attackTimer <= 0 && !playerHealth.isDead)
+        else if (attackTimer <= 0)
         {
-            Attack();
+            Enemy enemy = GetComponent<Enemy>();
+            enemy.Attack();
+
             attackTimer = attackCooldown;
         }
     }

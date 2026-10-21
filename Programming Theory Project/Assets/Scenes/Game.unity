@@ -2975,7 +2975,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &2138620845
 Transform:
   m_ObjectHideFlags: 0
@@ -3005,65 +3005,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   waveText: {fileID: 1592840253}
   spiderPrefab: {fileID: 3445917376494882868, guid: 36c9b79ac240ca043be41c8d9b02bb2c, type: 3}
+  beetlePrefab: {fileID: 7173742020872733848, guid: 63d73f94096b38048b9715bbae36ac01, type: 3}
   spawnRange: 10
   enemyCount: 3
---- !u!1001 &4619224561746114018
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 3902096427322042053, guid: 63d73f94096b38048b9715bbae36ac01, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3902096427322042053, guid: 63d73f94096b38048b9715bbae36ac01, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 3902096427322042053, guid: 63d73f94096b38048b9715bbae36ac01, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 10
-      objectReference: {fileID: 0}
-    - target: {fileID: 3902096427322042053, guid: 63d73f94096b38048b9715bbae36ac01, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3902096427322042053, guid: 63d73f94096b38048b9715bbae36ac01, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3902096427322042053, guid: 63d73f94096b38048b9715bbae36ac01, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0.7071068
-      objectReference: {fileID: 0}
-    - target: {fileID: 3902096427322042053, guid: 63d73f94096b38048b9715bbae36ac01, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: -0.7071068
-      objectReference: {fileID: 0}
-    - target: {fileID: 3902096427322042053, guid: 63d73f94096b38048b9715bbae36ac01, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 90
-      objectReference: {fileID: 0}
-    - target: {fileID: 3902096427322042053, guid: 63d73f94096b38048b9715bbae36ac01, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 180
-      objectReference: {fileID: 0}
-    - target: {fileID: 3902096427322042053, guid: 63d73f94096b38048b9715bbae36ac01, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7173742020872733848, guid: 63d73f94096b38048b9715bbae36ac01, type: 3}
-      propertyPath: m_Name
-      value: Beetle
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: 63d73f94096b38048b9715bbae36ac01, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -3074,4 +3018,3 @@ SceneRoots:
   - {fileID: 152783147}
   - {fileID: 867973830}
   - {fileID: 679514827}
-  - {fileID: 4619224561746114018}
