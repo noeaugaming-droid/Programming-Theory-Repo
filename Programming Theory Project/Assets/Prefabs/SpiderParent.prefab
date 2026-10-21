@@ -74,8 +74,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   health: 100
-  speed: 5
-  damage: 25
+  speed: 2.5
+  damage: 10
   player: {fileID: 0}
   attackRange: 3
   attackDelay: 2
