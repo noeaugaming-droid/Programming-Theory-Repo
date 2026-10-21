@@ -47,6 +47,8 @@ public class Beetle : Enemy
         }
         else if (attackTimer <= 0f)
         {
+            // POLYMORPHISM: An Enemy reference calls Attack(), but the Beetle
+            // override runs because this object is a Beetle.
             Enemy enemy = this;
             enemy.Attack();
             attackTimer = attackCooldown;

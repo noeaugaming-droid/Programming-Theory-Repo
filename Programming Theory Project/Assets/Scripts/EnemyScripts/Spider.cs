@@ -1,5 +1,7 @@
 using UnityEngine;
 
+// INHERITANCE: Spider inherits shared health, speed, damage, and TakeDamage()
+// from Enemy instead of duplicating that code.
 public class Spider : Enemy
 {
     [Header("Attack")]
