@@ -6,6 +6,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] GameObject titlePanel;
     [SerializeField] PlayerController playerController;
     [SerializeField] CameraLook cameraLook;
+    [SerializeField] GameObject hud;
 
     static bool gameStarted = false;
 
@@ -39,6 +40,7 @@ public class GameManager : MonoBehaviour
         Cursor.visible = false;
         playerController.enabled = true;
         cameraLook.enabled = true;
+        hud.SetActive(true);
     }
 
     public void RestartGame()

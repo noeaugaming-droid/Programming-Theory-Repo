@@ -6,6 +6,7 @@ public class PlayerHealth : MonoBehaviour
     [SerializeField] float health = 100f;
     [SerializeField] TMP_Text healthText;
     [SerializeField] GameObject gameOverPanel;
+    [SerializeField] GameObject hud;
 
     public bool isDead = false;
 
@@ -27,6 +28,7 @@ public class PlayerHealth : MonoBehaviour
             {
                 isDead = true;
                 gameOverPanel.SetActive(true);
+                hud.SetActive(false);
                 Cursor.lockState = CursorLockMode.None;
                 Cursor.visible = true;
 
