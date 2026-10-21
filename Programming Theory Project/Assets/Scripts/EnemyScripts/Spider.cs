@@ -21,8 +21,11 @@ public class Spider : Enemy
 
     void FixedUpdate()
     {
-        Move();
-        
+        float distance = Vector3.Distance(transform.position, player.position);
+        if (distance > attackRange)
+        {
+            Move();
+        }
     }
     void Move()
     {
