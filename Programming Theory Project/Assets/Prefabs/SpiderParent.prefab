@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 5661666861487707896}
   - component: {fileID: 4512839414528501529}
   - component: {fileID: 5464264522307558581}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SpiderParent
   m_TagString: Enemy
   m_Icon: {fileID: 0}
@@ -70,17 +70,16 @@ MonoBehaviour:
   m_GameObject: {fileID: 3445917376494882868}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ca6c06d514a245e4eb6d7544b529e9a5, type: 3}
+  m_Script: {fileID: 11500000, guid: fc3bdaf4b6ec8124d93a3c1454d56ac2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   health: 100
   speed: 5
   damage: 10
-  player: {fileID: 0}
   attackRange: 3
   attackDelay: 2
-  knockbackDuration: 1
-  knockbackForce: 20
+  knockbackDuration: 0.3
+  knockbackForce: 10
 --- !u!1001 &8764044467889974491
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -148,6 +147,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 2d6f3b9c30b398642a2f85c4bc6bd5c4, type: 3}
       propertyPath: m_Name
       value: LowPolySpider1
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 2d6f3b9c30b398642a2f85c4bc6bd5c4, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 2d6f3b9c30b398642a2f85c4bc6bd5c4, type: 3}
       propertyPath: m_TagString

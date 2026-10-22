@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 7804076572525596047}
   - component: {fileID: 3823302761001106647}
   - component: {fileID: 4270303212399522487}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Body
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -98,7 +98,7 @@ GameObject:
   - component: {fileID: 128114312425341805}
   - component: {fileID: 731748104432222102}
   - component: {fileID: 2124266393812523822}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: EyeL
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -185,7 +185,7 @@ GameObject:
   - component: {fileID: 3637409488680431002}
   - component: {fileID: 1085834095216990497}
   - component: {fileID: 3247767305326565741}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Head
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -273,7 +273,7 @@ GameObject:
   - component: {fileID: 6108238451363402182}
   - component: {fileID: 3930668188146708030}
   - component: {fileID: 5641668874554751005}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Beetle
   m_TagString: Enemy
   m_Icon: {fileID: 0}
@@ -355,16 +355,18 @@ MonoBehaviour:
   m_GameObject: {fileID: 7173742020872733848}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 03ce8d0686e294c4c843c13a121545b7, type: 3}
+  m_Script: {fileID: 11500000, guid: bfae2ce13715b5145b8864dad1f02f22, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   health: 100
-  speed: 1
-  damage: 25
+  speed: 5
+  damage: 10
   attackRange: 3
   attackCooldown: 2
   chargeForce: 15
-  knockbackForce: 50
+  chargeDuration: 0.3
+  knockbackForce: 10
+  knockbackDuration: 0.3
 --- !u!1 &8423681588415135491
 GameObject:
   m_ObjectHideFlags: 0
@@ -376,7 +378,7 @@ GameObject:
   - component: {fileID: 6954571139868887311}
   - component: {fileID: 1610818305602887705}
   - component: {fileID: 1989247635069571490}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: EyeR
   m_TagString: Untagged
   m_Icon: {fileID: 0}

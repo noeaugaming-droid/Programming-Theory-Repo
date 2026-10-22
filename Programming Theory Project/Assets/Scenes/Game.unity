@@ -889,10 +889,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 311949417}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3dd7506fe73b52b4797b0894468208d1, type: 3}
+  m_Script: {fileID: 11500000, guid: 521394bd2f4b4da47af0bcf45eeeb1c3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mouseSensitivity: 1
+  mouseSensitivity: 2
   minRotation: -60
   maxRotation: 60
 --- !u!1 &322262435
@@ -1358,11 +1358,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 608680338}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 70b5a14b78876e745bf3ffb82e60cc0b, type: 3}
+  m_Script: {fileID: 11500000, guid: 97a579028a7a9f04a9e3311f8a58434c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   speed: 10
-  mouseSensitivity: 1
+  mouseSensitivity: 2
   jumpForce: 7
   gravity: 20
   dashSpeed: 25
@@ -1377,17 +1377,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 608680338}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 653c30c790a13fd47ba791b4d9e6f52a, type: 3}
+  m_Script: {fileID: 11500000, guid: ae2528c2035d8534590ff644531f8961, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  bulletSpawnPoint: {fileID: 1269750659}
-  bulletPrefab: {fileID: 7899116783698651641, guid: 862c5ebff79995041ad96cb3a89ab1d4, type: 3}
-  range: 100
-  shootDelay: 0.25
-  bulletSpeed: 200
-  hitLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
+  health: 100
+  healthText: {fileID: 1709969886}
+  gameOverPanel: {fileID: 1210839302}
+  hud: {fileID: 170728145}
 --- !u!114 &608680346
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1397,14 +1393,17 @@ MonoBehaviour:
   m_GameObject: {fileID: 608680338}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 32539e9d46f1d5a4aa7f539dcf5a46b4, type: 3}
+  m_Script: {fileID: 11500000, guid: bfb3552556db90a48930428d7d4b5509, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  health: 100
-  healthText: {fileID: 1709969886}
-  gameOverPanel: {fileID: 1210839302}
-  hud: {fileID: 170728145}
-  isDead: 0
+  bulletSpawnPoint: {fileID: 1269750659}
+  bulletPrefab: {fileID: 7899116783698651641, guid: 862c5ebff79995041ad96cb3a89ab1d4, type: 3}
+  range: 100
+  shootDelay: 0.25
+  bulletSpeed: 200
+  hitLayers:
+    serializedVersion: 2
+    m_Bits: 191
 --- !u!1 &679514825
 GameObject:
   m_ObjectHideFlags: 0
@@ -1431,14 +1430,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 679514825}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2318a0b8ead30364e8683578ecddaef9, type: 3}
+  m_Script: {fileID: 11500000, guid: e10d6162685c8ff40a7077e0f531451c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   titlePanel: {fileID: 1737997247}
   hud: {fileID: 170728145}
   playerController: {fileID: 608680344}
-  cameraLook: {fileID: 311949419}
-  bulletShooter: {fileID: 608680345}
+  cameraLook: {fileID: 961739757}
+  bulletShooter: {fileID: 608680346}
 --- !u!4 &679514827
 Transform:
   m_ObjectHideFlags: 0
@@ -1799,7 +1798,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 768958582}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3a95e2a95020105448d824095732bac1, type: 3}
+  m_Script: {fileID: 11500000, guid: ce77be4bea6cba7408ab645a8f015bcb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   cameraPivot: {fileID: 311949418}
@@ -2007,9 +2006,9 @@ GameObject:
   - component: {fileID: 961739752}
   - component: {fileID: 961739751}
   - component: {fileID: 961739750}
-  - component: {fileID: 961739755}
   - component: {fileID: 961739756}
   - component: {fileID: 961739757}
+  - component: {fileID: 961739758}
   m_Layer: 6
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -2129,31 +2128,12 @@ Transform:
   m_GameObject: {fileID: 961739749}
   serializedVersion: 2
   m_LocalRotation: {x: 0.043619405, y: -0, z: -0, w: 0.9990483}
-  m_LocalPosition: {x: 0.589, y: 1.7980001, z: -3.312}
+  m_LocalPosition: {x: 2, y: 1.7980001, z: -2}
   m_LocalScale: {x: 0.1, y: 0.10683652, z: 0.9931635}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 5, y: 0, z: 0}
---- !u!114 &961739755
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 961739749}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0486bdacf06e4034aba016acc3ee6e5c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  cameraPivot: {fileID: 311949418}
-  cameraOffset: {x: 5, y: 1, z: -5}
-  cameraRadius: 0.3
-  wallOffset: 0.1
-  collisionLayers:
-    serializedVersion: 2
-    m_Bits: 63
 --- !u!65 &961739756
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -2184,14 +2164,29 @@ MonoBehaviour:
   m_GameObject: {fileID: 961739749}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 53b7757771bed7948a2d1cbc4bae238d, type: 3}
+  m_Script: {fileID: 11500000, guid: 521394bd2f4b4da47af0bcf45eeeb1c3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  mouseSensitivity: 2
+  minRotation: -60
+  maxRotation: 60
+--- !u!114 &961739758
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 961739749}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 42f044ec4bbd0964683becd8da294fd0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   cameraPivot: {fileID: 311949418}
-  cameraOffset: {x: 0, y: 1, z: -5}
-  followSpeed: 100
+  cameraOffset: {x: 5, y: 1, z: -5}
+  followSpeed: 15
   verticalFollowSpeed: 5
-  dashFollowSpeed: 0.1
+  dashFollowSpeed: 4
   dashThreshold: 15
   jumpThreshold: 1
   normalFOV: 90
@@ -2202,7 +2197,7 @@ MonoBehaviour:
   wallOffset: 0.1
   collisionLayers:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 191
 --- !u!1 &978325867
 GameObject:
   m_ObjectHideFlags: 0
@@ -3819,7 +3814,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 2138620844}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d268cf73fbe571d4796cf108253518c5, type: 3}
+  m_Script: {fileID: 11500000, guid: 4fc1c210cf321e74396a23e1f797f346, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   waveText: {fileID: 1592840253}
