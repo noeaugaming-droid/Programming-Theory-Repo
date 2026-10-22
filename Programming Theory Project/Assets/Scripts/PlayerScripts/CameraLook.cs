@@ -1,3 +1,4 @@
+
 using UnityEngine;
 
 public class CameraLook : MonoBehaviour
@@ -12,8 +13,10 @@ public class CameraLook : MonoBehaviour
     void Update()
     {
         float mouseY = Input.GetAxis("Mouse Y");
+
         verticalRotation -= mouseY * mouseSensitivity;
         verticalRotation = Mathf.Clamp(verticalRotation, minRotation, maxRotation);
+
         transform.localRotation = Quaternion.Euler(verticalRotation, 0f, 0f);
     }
 }

@@ -1,3 +1,4 @@
+
 using System.Collections;
 using UnityEngine;
 
@@ -30,40 +31,63 @@ public class BulletShooter : MonoBehaviour
     IEnumerator Shoot()
     {
         Vector3 direction = bulletSpawnPoint.forward;
-        GameObject bullet = Instantiate(bulletPrefab, bulletSpawnPoint.position, bulletSpawnPoint.rotation);
+
+        GameObject bullet = Instantiate(
+            bulletPrefab,
+            bulletSpawnPoint.position,
+            bulletSpawnPoint.rotation
+        );
+
         float distanceTraveled = 0f;
 
         while (distanceTraveled < range)
         {
             float moveDistance = bulletSpeed * Time.deltaTime;
+
             if (distanceTraveled + moveDistance > range)
             {
                 moveDistance = range - distanceTraveled;
             }
 
-            if (Physics.Raycast(bullet.transform.position, direction, out RaycastHit hit,
-                moveDistance, hitLayers, QueryTriggerInteraction.Ignore))
+            // Raycast only checks the bullet's next movement step.
+            if (Physics.Raycast(
+                bullet.transform.position,
+                direction,
+                out RaycastHit hit,
+                moveDistance,
+                hitLayers,
+                QueryTriggerInteraction.Ignore))
             {
                 bullet.transform.position = hit.point;
+
                 Enemy enemy = hit.collider.GetComponentInParent<Enemy>();
 
                 if (enemy != null)
                 {
                     Spider spider = enemy as Spider;
-                    if (spider != null) spider.Knockback(direction);
+                    if (spider != null)
+                    {
+                        spider.Knockback(direction);
+                    }
 
                     Beetle beetle = enemy as Beetle;
-                    if (beetle != null) beetle.Knockback(direction);
+                    if (beetle != null)
+                    {
+                        beetle.Knockback(direction);
+                    }
 
                     enemy.TakeDamage(20f);
                 }
 
-                Debug.Log("Bullet hit: " + hit.collider.gameObject.name);
+                Debug.Log("Bullet hit: " + hit.collider.name);
                 break;
             }
 
+            // Move the visual bullet the exact same distance.
             bullet.transform.position += direction * moveDistance;
+
             distanceTraveled += moveDistance;
+
             yield return null;
         }
 
