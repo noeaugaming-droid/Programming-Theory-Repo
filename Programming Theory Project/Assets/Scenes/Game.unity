@@ -877,8 +877,7 @@ Transform:
   m_LocalPosition: {x: 0.589, y: 0.698, z: 1.688}
   m_LocalScale: {x: 0.1, y: 0.1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 961739753}
+  m_Children: []
   m_Father: {fileID: 608680343}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &311949419
@@ -893,7 +892,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3dd7506fe73b52b4797b0894468208d1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mouseSensitivity: 0.5
+  mouseSensitivity: 1
   minRotation: -60
   maxRotation: 60
 --- !u!1 &322262435
@@ -1363,7 +1362,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   speed: 10
-  mouseSensitivity: 2
+  mouseSensitivity: 1
+  jumpForce: 7
+  gravity: 20
+  dashSpeed: 25
+  dashDuration: 0.2
+  dashCooldown: 1
 --- !u!114 &608680345
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2005,6 +2009,7 @@ GameObject:
   - component: {fileID: 961739750}
   - component: {fileID: 961739755}
   - component: {fileID: 961739756}
+  - component: {fileID: 961739757}
   m_Layer: 6
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -2097,7 +2102,7 @@ Camera:
     height: 1
   near clip plane: 0.3
   far clip plane: 1000
-  field of view: 60
+  field of view: 120
   orthographic: 0
   orthographic size: 5
   m_Depth: -1
@@ -2124,11 +2129,11 @@ Transform:
   m_GameObject: {fileID: 961739749}
   serializedVersion: 2
   m_LocalRotation: {x: 0.043619405, y: -0, z: -0, w: 0.9990483}
-  m_LocalPosition: {x: 0, y: 1, z: -5}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalPosition: {x: 0.589, y: 1.7980001, z: -3.312}
+  m_LocalScale: {x: 0.1, y: 0.10683652, z: 0.9931635}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 311949418}
+  m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 5, y: 0, z: 0}
 --- !u!114 &961739755
 MonoBehaviour:
@@ -2143,7 +2148,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   cameraPivot: {fileID: 311949418}
-  cameraOffset: {x: 0, y: 1, z: -5}
+  cameraOffset: {x: 5, y: 1, z: -5}
   cameraRadius: 0.3
   wallOffset: 0.1
   collisionLayers:
@@ -2170,6 +2175,34 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &961739757
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 961739749}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 53b7757771bed7948a2d1cbc4bae238d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cameraPivot: {fileID: 311949418}
+  cameraOffset: {x: 0, y: 1, z: -5}
+  followSpeed: 100
+  verticalFollowSpeed: 5
+  dashFollowSpeed: 0.1
+  dashThreshold: 15
+  jumpThreshold: 1
+  normalFOV: 90
+  jumpFOV: 65
+  dashFOV: 120
+  fovSpeed: 6
+  cameraRadius: 0.3
+  wallOffset: 0.1
+  collisionLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
 --- !u!1 &978325867
 GameObject:
   m_ObjectHideFlags: 0
@@ -3800,6 +3833,7 @@ SceneRoots:
   m_Roots:
   - {fileID: 203844589}
   - {fileID: 754635743}
+  - {fileID: 961739753}
   - {fileID: 608680343}
   - {fileID: 152783147}
   - {fileID: 867973830}
