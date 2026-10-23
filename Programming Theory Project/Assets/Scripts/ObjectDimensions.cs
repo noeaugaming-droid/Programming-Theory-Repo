@@ -5,7 +5,8 @@ public class MapDimensions : MonoBehaviour
 {
     void Start()
     {
-        Renderer[] renderers = GetComponentsInChildren<Renderer>();
+        Renderer[] renderers =
+            GetComponentsInChildren<Renderer>();
 
         if (renderers.Length == 0)
         {

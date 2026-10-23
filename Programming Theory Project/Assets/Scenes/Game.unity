@@ -981,9 +981,15 @@ MonoBehaviour:
   mouseSensitivity: 2
   minPitch: -60
   maxPitch: 60
-  flipMinPitch: -170
-  flipMaxPitch: 170
-  playerController: {fileID: 0}
+  frontFlipMinPitch: -85
+  frontFlipMaxPitch: 85
+  aimRange: 150
+  aimLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  mouseReleaseThreshold: 0.05
+  playerController: {fileID: 608680344}
+  cameraFollow: {fileID: 961739758}
 --- !u!1 &322262435
 GameObject:
   m_ObjectHideFlags: 0
@@ -1380,8 +1386,8 @@ Transform:
   m_Children:
   - {fileID: 233048236}
   - {fileID: 1567951339}
-  - {fileID: 311949418}
   - {fileID: 768958583}
+  - {fileID: 311949418}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &608680344
@@ -1396,8 +1402,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 97a579028a7a9f04a9e3311f8a58434c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  visualModel: {fileID: 233048236}
-  cameraPivot: {fileID: 311949418}
   speed: 10
   mouseSensitivity: 2
   jumpForce: 7
@@ -1405,15 +1409,29 @@ MonoBehaviour:
   dashSpeed: 25
   dashDuration: 0.2
   dashCooldown: 1
+  visualModel: {fileID: 233048236}
+  cameraPivot: {fileID: 311949418}
+  cameraLook: {fileID: 311949419}
   doubleTapWindow: 0.7
-  flipUpwardVelocity: 13
+  flipUpwardVelocity: 40
   flipHorizontalSpeed: 12
-  flipDuration: 1
-  flipGravityMultiplier: 1
+  flipDuration: 0.5
+  flipGravityMultiplier: 2
   apexVelocityDamping: 1
   apexWindow: 0.5
-  preserveFlipTravelDirection: 1
-  newInputCancelsDirectionLock: 1
+  oneFlipPerLanding: 1
+  groundedResetTime: 0.08
+  enableAimOrbit: 1
+  minimumOrbitRadius: 2.5
+  maximumOrbitRadius: 25
+  orbitSteering: 14
+  orbitFacingSpeed: 18
+  orbitRadiusCorrection: 0.65
+  enableInvertedHalfTurn: 1
+  halfTurnStart: 0.45
+  halfTurnEnd: 0.95
+  frontFlipSteeringSpeed: 9
+  frontFlipLandingSpeed: 10
 --- !u!114 &608680345
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1444,6 +1462,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   aimCamera: {fileID: 961739752}
+  cameraLook: {fileID: 311949419}
   bulletSpawnPoint: {fileID: 1269750659}
   bulletPrefab: {fileID: 7899116783698651641, guid: 862c5ebff79995041ad96cb3a89ab1d4, type: 3}
   range: 100
@@ -1486,7 +1505,7 @@ MonoBehaviour:
   titlePanel: {fileID: 1737997247}
   hud: {fileID: 170728145}
   playerController: {fileID: 608680344}
-  cameraLook: {fileID: 0}
+  cameraLook: {fileID: 311949419}
   bulletShooter: {fileID: 608680346}
 --- !u!4 &679514827
 Transform:
@@ -2384,22 +2403,21 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   cameraPivot: {fileID: 311949418}
-  playerVisual: {fileID: 233048236}
+  playerController: {fileID: 608680344}
+  cameraLook: {fileID: 311949419}
   cameraOffset: {x: 1, y: 1, z: -5}
-  horizontalSmoothTime: 0.1
-  verticalSmoothTime: 0.1
-  enableFlipTracking: 1
-  trackingRange: 150
-  allowMouseRetargeting: 1
-  flipRotationSmoothTime: 0.4
-  maxFlipRotationSpeed: 540
-  crosshairFreedomRadius: 5
-  flipCameraLift: 0.65
-  flipCameraForwardTravel: 0.35
-  flipSmoothTime: 0.08
-  bodyFlipStrength: 1
-  targetFacingStrength: 1
-  bodyTurnSpeed: 540
+  followSmoothTime: 0
+  maximumFollowDistance: 15
+  rotateCameraTowardAimPoint: 1
+  aimRotationSpeed: 18
+  rollWithCartwheel: 1
+  rollAmount: 1
+  enableFirstPersonFlips: 1
+  eyeOffset: {x: 0, y: 1.65, z: 0.12}
+  headTransform: {fileID: 0}
+  enterFirstPersonAt: 0.18
+  exitFirstPersonAt: 0.82
+  flipCameraPitchOffset: 0
   enableCameraCollision: 1
   cameraRadius: 0.3
   wallOffset: 0.1
@@ -2407,6 +2425,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 63
   normalFOV: 90
+  firstPersonFlipFOV: 100
   jumpFOV: 65
   dashFOV: 120
   dashThreshold: 15
@@ -3295,6 +3314,7 @@ GameObject:
   - component: {fileID: 1594600569}
   - component: {fileID: 1594600571}
   - component: {fileID: 1594600570}
+  - component: {fileID: 1594600572}
   m_Layer: 5
   m_Name: Crosshair
   m_TagString: Untagged
@@ -3359,6 +3379,26 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1594600568}
   m_CullTransparentMesh: 1
+--- !u!114 &1594600572
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1594600568}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8c8546df26c431d46acf5ddfaeee2e79, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cameraLook: {fileID: 311949419}
+  cameraFollow: {fileID: 961739758}
+  playerController: {fileID: 608680344}
+  crosshairRect: {fileID: 1594600569}
+  canvas: {fileID: 867973829}
+  clampToScreen: 1
+  screenPadding: 20
+  alwaysVisibleDuringFlips: 1
 --- !u!1 &1706193401
 GameObject:
   m_ObjectHideFlags: 0

@@ -1,122 +1,136 @@
 
 using UnityEngine;
+using UnityEngine.UI;
 
-[DefaultExecutionOrder(300)]
-[RequireComponent(typeof(RectTransform))]
+[DefaultExecutionOrder(200)]
 public class CrosshairFollow : MonoBehaviour
 {
     [Header("References")]
-    [SerializeField] private Camera aimCamera;
+    [SerializeField] private CameraLook cameraLook;
     [SerializeField] private CameraFollow cameraFollow;
+    [SerializeField] private PlayerController playerController;
+    [SerializeField] private RectTransform crosshairRect;
+    [SerializeField] private Canvas canvas;
+
+    [Header("Screen Behavior")]
+    [SerializeField] private bool clampToScreen = true;
+    [SerializeField] private float screenPadding = 30f;
 
     [Header("Flip Crosshair")]
-    [SerializeField] private bool enableFlipCrosshairFreedom = true;
+    [SerializeField] private bool alwaysVisibleDuringFlips = true;
 
-    private RectTransform crosshairRect;
-    private Canvas parentCanvas;
+    private Graphic crosshairGraphic;
 
     private void Awake()
     {
-        crosshairRect = GetComponent<RectTransform>();
-        parentCanvas = GetComponentInParent<Canvas>();
+        if (cameraLook == null)
+            cameraLook = FindAnyObjectByType<CameraLook>();
 
-        if (aimCamera == null)
-            aimCamera = Camera.main;
+        if (cameraFollow == null)
+            cameraFollow = FindAnyObjectByType<CameraFollow>();
 
-        if (cameraFollow == null && aimCamera != null)
-        {
-            cameraFollow =
-                aimCamera.GetComponent<CameraFollow>();
-        }
+        if (playerController == null)
+            playerController = FindAnyObjectByType<PlayerController>();
+
+        if (crosshairRect == null)
+            crosshairRect = GetComponent<RectTransform>();
+
+        if (canvas == null)
+            canvas = GetComponentInParent<Canvas>();
+
+        crosshairGraphic = GetComponent<Graphic>();
     }
 
     private void LateUpdate()
     {
-        if (crosshairRect == null ||
-            aimCamera == null ||
-            parentCanvas == null)
+        if (cameraLook == null ||
+            cameraFollow == null ||
+            crosshairRect == null ||
+            canvas == null)
             return;
 
-        Vector2 screenCenter = new Vector2(
-            Screen.width * 0.5f,
-            Screen.height * 0.5f
-        );
+        Camera cam = cameraFollow.AttachedCamera;
 
-        Vector2 desiredScreenPosition = screenCenter;
+        if (cam == null)
+            return;
 
-        bool flipTracking =
-            enableFlipCrosshairFreedom &&
-            cameraFollow != null &&
-            cameraFollow.IsTrackingFlip;
+        bool verticalFlip =
+            playerController != null &&
+            playerController.IsFlipping &&
+            (
+                playerController.CurrentTrick ==
+                    PlayerController.TrickType.FrontFlip ||
+                playerController.CurrentTrick ==
+                    PlayerController.TrickType.BackFlip
+            );
 
-        if (flipTracking)
+        Vector3 screenPoint =
+            cam.WorldToScreenPoint(cameraLook.AimPoint);
+
+        bool behindCamera = screenPoint.z <= 0f;
+
+        if (behindCamera)
         {
-            Vector3 projected =
-                aimCamera.WorldToScreenPoint(
-                    cameraFollow.LockedHitPoint
-                );
-
-            if (projected.z > 0f)
+            if (verticalFlip && alwaysVisibleDuringFlips)
             {
-                Vector2 targetScreenPosition =
-                    new Vector2(
-                        projected.x,
-                        projected.y
-                    );
-
-                Vector2 offset =
-                    targetScreenPosition -
-                    screenCenter;
-
-                // Crosshair may drift only within
-                // the configured freedom radius.
-                offset = Vector2.ClampMagnitude(
-                    offset,
-                    cameraFollow.CrosshairFreedomRadius
+                screenPoint = new Vector3(
+                    Screen.width * 0.5f,
+                    Screen.height * 0.5f,
+                    1f
                 );
+            }
+            else
+            {
+                if (crosshairGraphic != null)
+                    crosshairGraphic.enabled = false;
 
-                desiredScreenPosition =
-                    screenCenter + offset;
+                return;
             }
         }
 
-        SetCrosshairScreenPosition(
-            desiredScreenPosition
-        );
-    }
+        if (crosshairGraphic != null)
+            crosshairGraphic.enabled = true;
 
-    private void SetCrosshairScreenPosition(
-        Vector2 screenPosition)
-    {
-        if (parentCanvas.renderMode ==
-            RenderMode.ScreenSpaceOverlay)
+        if (clampToScreen)
         {
-            crosshairRect.position = screenPosition;
-            return;
+            float padding = Mathf.Max(
+                0f,
+                screenPadding
+            );
+
+            screenPoint.x = Mathf.Clamp(
+                screenPoint.x,
+                padding,
+                Screen.width - padding
+            );
+
+            screenPoint.y = Mathf.Clamp(
+                screenPoint.y,
+                padding,
+                Screen.height - padding
+            );
         }
 
         RectTransform canvasRect =
-            parentCanvas.transform as RectTransform;
+            canvas.transform as RectTransform;
 
         if (canvasRect == null)
             return;
 
-        Camera canvasCamera =
-            parentCanvas.renderMode ==
-                RenderMode.ScreenSpaceCamera
-            ? parentCanvas.worldCamera
-            : aimCamera;
+        Camera uiCamera =
+            canvas.renderMode ==
+            RenderMode.ScreenSpaceOverlay
+            ? null
+            : canvas.worldCamera;
 
-        Vector2 localPoint;
-
-        if (RectTransformUtility.ScreenPointToLocalPointInRectangle(
-            canvasRect,
-            screenPosition,
-            canvasCamera,
-            out localPoint))
+        if (RectTransformUtility
+            .ScreenPointToLocalPointInRectangle(
+                canvasRect,
+                screenPoint,
+                uiCamera,
+                out Vector2 localPoint))
         {
-            crosshairRect.position =
-                canvasRect.TransformPoint(localPoint);
+            crosshairRect.anchoredPosition = localPoint;
         }
     }
 }

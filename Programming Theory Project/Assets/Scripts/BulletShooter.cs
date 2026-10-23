@@ -2,11 +2,11 @@
 using System.Collections;
 using UnityEngine;
 
-[DefaultExecutionOrder(200)]
 public class BulletShooter : MonoBehaviour
 {
     [Header("Shooting")]
     [SerializeField] private Camera aimCamera;
+    [SerializeField] private CameraLook cameraLook;
     [SerializeField] private Transform bulletSpawnPoint;
     [SerializeField] private GameObject bulletPrefab;
     [SerializeField] private float range = 100f;
@@ -28,18 +28,24 @@ public class BulletShooter : MonoBehaviour
     {
         if (aimCamera == null)
             aimCamera = Camera.main;
+
+        if (cameraLook == null)
+            cameraLook = FindAnyObjectByType<CameraLook>();
     }
 
-    private void LateUpdate()
+    private void Update()
     {
+        if (Cursor.lockState != CursorLockMode.Locked)
+            return;
+
         if (Input.GetMouseButtonDown(0) && canShoot)
         {
-            if (aimCamera == null ||
-                bulletSpawnPoint == null ||
+            if (bulletSpawnPoint == null ||
                 bulletPrefab == null)
             {
                 Debug.LogWarning(
-                    "BulletShooter: Missing a reference!"
+                    "BulletShooter: Missing bullet references.",
+                    this
                 );
                 return;
             }
@@ -53,81 +59,76 @@ public class BulletShooter : MonoBehaviour
 
     private void Fire()
     {
-        // Raycast from the final camera view.
-        Ray cameraRay = aimCamera.ViewportPointToRay(
-            new Vector3(0.5f, 0.5f, 0f)
-        );
-
         Vector3 aimPoint;
 
-        if (Physics.Raycast(
-            cameraRay,
-            out RaycastHit cameraHit,
-            range,
-            hitLayers,
-            QueryTriggerInteraction.Ignore))
+        if (cameraLook != null)
         {
-            aimPoint = cameraHit.point;
-
-            Debug.Log(
-                "Camera ray hit: " +
-                cameraHit.collider.name +
-                " at " + aimPoint
+            aimPoint = cameraLook.AimPoint;
+        }
+        else if (aimCamera != null)
+        {
+            Ray ray = aimCamera.ViewportPointToRay(
+                new Vector3(0.5f, 0.5f, 0f)
             );
+
+            if (Physics.Raycast(
+                ray,
+                out RaycastHit hit,
+                range,
+                hitLayers,
+                QueryTriggerInteraction.Ignore))
+            {
+                aimPoint = hit.point;
+            }
+            else
+            {
+                aimPoint = ray.GetPoint(range);
+            }
         }
         else
         {
-            aimPoint = cameraRay.GetPoint(range);
-
-            Debug.Log(
-                "Camera ray hit nothing. " +
-                "Aiming at: " + aimPoint
+            Debug.LogWarning(
+                "BulletShooter: No aiming reference.",
+                this
             );
+            return;
         }
 
-        // Bullet always spawns from the gun.
         Vector3 spawnPosition =
             bulletSpawnPoint.position;
 
-        // Aim from the gun toward the camera target.
         Vector3 direction =
             aimPoint - spawnPosition;
 
         if (direction.sqrMagnitude < 0.0001f)
-            direction = cameraRay.direction;
-        else
-            direction.Normalize();
+        {
+            direction =
+                bulletSpawnPoint.forward;
+        }
+
+        direction.Normalize();
 
         if (showDebugRays)
         {
             Debug.DrawLine(
-                cameraRay.origin,
+                spawnPosition,
                 aimPoint,
                 Color.green,
-                3f
+                2f
             );
 
             Debug.DrawRay(
                 spawnPosition,
                 direction * range,
                 Color.red,
-                3f
+                2f
             );
         }
-
-        Debug.Log(
-            "Bullet spawn: " + spawnPosition +
-            " | Direction: " + direction +
-            " | Aim point: " + aimPoint
-        );
-
-        Quaternion bulletRotation =
-            bulletSpawnPoint.rotation;
 
         GameObject bullet = Instantiate(
             bulletPrefab,
             spawnPosition,
-            bulletRotation
+            bulletSpawnPoint.rotation
         );
 
         StartCoroutine(
@@ -145,32 +146,52 @@ public class BulletShooter : MonoBehaviour
                distanceTraveled < range)
         {
             float moveDistance =
-                bulletSpeed * Time.deltaTime;
-
-            moveDistance = Mathf.Min(
-                moveDistance,
-                range - distanceTraveled
-            );
+                Mathf.Min(
+                    bulletSpeed * Time.deltaTime,
+                    range - distanceTraveled
+                );
 
             Vector3 currentPosition =
                 bullet.transform.position;
 
-            if (Physics.Raycast(
+            RaycastHit[] hits = Physics.RaycastAll(
                 currentPosition,
                 direction,
-                out RaycastHit hit,
                 moveDistance,
                 hitLayers,
-                QueryTriggerInteraction.Ignore))
-            {
-                bullet.transform.position = hit.point;
+                QueryTriggerInteraction.Ignore
+            );
 
-                Debug.Log(
-                    "Bullet hit: " + hit.collider.name
-                );
+            RaycastHit nearestHit = default;
+            float nearestDistance = moveDistance;
+            bool foundHit = false;
+
+            foreach (RaycastHit hit in hits)
+            {
+                if (hit.collider == null)
+                    continue;
+
+                if (hit.collider.transform.IsChildOf(
+                    transform.root
+                ))
+                    continue;
+
+                if (hit.distance < nearestDistance)
+                {
+                    nearestDistance = hit.distance;
+                    nearestHit = hit;
+                    foundHit = true;
+                }
+            }
+
+            if (foundHit)
+            {
+                bullet.transform.position =
+                    nearestHit.point;
 
                 Enemy enemy =
-                    hit.collider.GetComponentInParent<Enemy>();
+                    nearestHit.collider
+                    .GetComponentInParent<Enemy>();
 
                 if (enemy != null)
                 {
