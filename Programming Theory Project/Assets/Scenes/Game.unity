@@ -1406,8 +1406,8 @@ MonoBehaviour:
   flipHorizontalSpeed: 12
   flipDuration: 0.8
   flipGravityMultiplier: 1
-  apexVelocityDamping: 0.8
-  apexWindow: 0.18
+  apexVelocityDamping: 1
+  apexWindow: 0.5
 --- !u!114 &608680345
 MonoBehaviour:
   m_ObjectHideFlags: 0
