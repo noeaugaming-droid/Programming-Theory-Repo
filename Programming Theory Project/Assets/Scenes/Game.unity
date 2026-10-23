@@ -1595,6 +1595,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 754635743}
+  - component: {fileID: 754635744}
+  - component: {fileID: 754635745}
   m_Layer: 0
   m_Name: Arena
   m_TagString: Untagged
@@ -1622,6 +1624,39 @@ Transform:
   - {fileID: 221849328}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &754635744
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 754635742}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 82a8ef9a6cbf42a40b66962979479c62, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!65 &754635745
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 754635742}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &768597322
 GameObject:
   m_ObjectHideFlags: 0
@@ -1811,6 +1846,7 @@ GameObject:
   m_Component:
   - component: {fileID: 808787282}
   - component: {fileID: 808787283}
+  - component: {fileID: 808787284}
   m_Layer: 0
   m_Name: SpawnPoint4
   m_TagString: Untagged
@@ -1827,7 +1863,7 @@ Transform:
   m_GameObject: {fileID: 808787281}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: -50}
+  m_LocalPosition: {x: 127.5, y: 0, z: -127.5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1847,6 +1883,27 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   player: {fileID: 608680343}
   enemySpawner: {fileID: 2138620845}
+--- !u!65 &808787284
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 808787281}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 255, y: 50, z: 255}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &867973826
 GameObject:
   m_ObjectHideFlags: 0
@@ -3211,6 +3268,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1706193402}
   - component: {fileID: 1706193403}
+  - component: {fileID: 1706193404}
   m_Layer: 0
   m_Name: SpawnPoint1
   m_TagString: Untagged
@@ -3227,7 +3285,7 @@ Transform:
   m_GameObject: {fileID: 1706193401}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 50}
+  m_LocalPosition: {x: -127.5, y: 0, z: 127.5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3247,6 +3305,27 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   player: {fileID: 608680343}
   enemySpawner: {fileID: 2138620845}
+--- !u!65 &1706193404
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1706193401}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 255, y: 50, z: 255}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &1709969884
 GameObject:
   m_ObjectHideFlags: 0
@@ -3580,6 +3659,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1754795657}
   - component: {fileID: 1754795658}
+  - component: {fileID: 1754795659}
   m_Layer: 0
   m_Name: SpawnPoint3
   m_TagString: Untagged
@@ -3596,7 +3676,7 @@ Transform:
   m_GameObject: {fileID: 1754795656}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -50, y: 0, z: 50}
+  m_LocalPosition: {x: -127.5, y: 0, z: -127.5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3616,6 +3696,27 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   player: {fileID: 608680343}
   enemySpawner: {fileID: 2138620845}
+--- !u!65 &1754795659
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1754795656}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 255, y: 50, z: 255}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &1759163875
 GameObject:
   m_ObjectHideFlags: 0
@@ -3626,6 +3727,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1759163876}
   - component: {fileID: 1759163877}
+  - component: {fileID: 1759163878}
   m_Layer: 0
   m_Name: SpawnPoint2
   m_TagString: Untagged
@@ -3642,7 +3744,7 @@ Transform:
   m_GameObject: {fileID: 1759163875}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 50, y: 0, z: 50}
+  m_LocalPosition: {x: 127.5, y: 0, z: 127.5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3662,6 +3764,27 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   player: {fileID: 608680343}
   enemySpawner: {fileID: 2138620845}
+--- !u!65 &1759163878
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1759163875}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 255, y: 50, z: 255}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &1872916435
 GameObject:
   m_ObjectHideFlags: 0

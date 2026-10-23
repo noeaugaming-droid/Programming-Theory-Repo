@@ -6,7 +6,7 @@ public class SpawnerSwitch : MonoBehaviour
     [SerializeField] private Transform player;
     [SerializeField] private Transform enemySpawner;
 
-    private float activationRange = 50f;
+    private float activationRange = 127;
 
     void Update()
     {
