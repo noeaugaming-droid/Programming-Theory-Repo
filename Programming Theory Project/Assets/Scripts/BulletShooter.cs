@@ -19,7 +19,7 @@ public class BulletShooter : MonoBehaviour
 
     void Update()
     {
-        if (Input.GetMouseButtonDown(0) && canShoot)
+        if (Input.GetMouseButton(0) && canShoot)
         {
             canShoot = false;
             StartCoroutine(Shoot());

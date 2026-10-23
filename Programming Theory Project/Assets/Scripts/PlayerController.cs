@@ -42,7 +42,10 @@ public class PlayerController : MonoBehaviour
         // Read input in Update so key presses are not missed.
         horIn = Input.GetAxis("Horizontal");
         vertIn = Input.GetAxis("Vertical");
-        mouseX += Input.GetAxis("Mouse X") * mouseSensitivity;
+        float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity;
+
+        playerRb.MoveRotation(
+    playerRb.rotation * Quaternion.Euler(0f, mouseX, 0f));
 
         if (Input.GetKeyDown(KeyCode.Space)) jumpKeyPressed = true;
         if (Input.GetKeyDown(KeyCode.Q)) dashKeyPressed = true;
@@ -54,9 +57,9 @@ public class PlayerController : MonoBehaviour
         bool groundedLastStep = isGrounded;
         isGrounded = false;
 
-        playerRb.MoveRotation(
-            playerRb.rotation * Quaternion.Euler(0f, mouseX, 0f));
-        mouseX = 0f;
+        //playerRb.MoveRotation(
+           // playerRb.rotation * Quaternion.Euler(0f, mouseX, 0f));
+        //mouseX = 0f;
 
         Vector3 direction = transform.forward * vertIn + transform.right * horIn;
         direction = direction.normalized;
