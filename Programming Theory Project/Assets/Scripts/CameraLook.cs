@@ -1,43 +1,73 @@
 
 using UnityEngine;
 
-[DefaultExecutionOrder(10)]
+[DefaultExecutionOrder(-50)]
 public class CameraLook : MonoBehaviour
 {
-    [Header("Mouse Look")]
+    [Header("Mouse")]
     [SerializeField] private float mouseSensitivity = 2f;
 
-    [SerializeField] private float minPitch = -60f;
-    [SerializeField] private float maxPitch = 60f;
+    [Header("Normal Pitch Limits")]
+    [SerializeField] private float minPitch = -80f;
+    [SerializeField] private float maxPitch = 80f;
+
+    [Header("Flip Pitch Limits")]
+    [SerializeField] private float flipMinPitch = -170f;
+    [SerializeField] private float flipMaxPitch = 170f;
+
+    [Header("References")]
+    [SerializeField] private PlayerController playerController;
 
     private float pitch;
 
+    public float Pitch => pitch;
+
     private void Awake()
     {
+        if (playerController == null)
+        {
+            playerController =
+                GetComponentInParent<PlayerController>();
+        }
+
         pitch = Mathf.DeltaAngle(
             0f,
             transform.localEulerAngles.x
         );
-
-        pitch = Mathf.Clamp(pitch, minPitch, maxPitch);
     }
 
     private void Update()
     {
-        if (Cursor.lockState != CursorLockMode.Locked)
-            return;
+        bool flipping =
+            playerController != null &&
+            playerController.IsFlipping;
 
-        // Raw input: no additional mouse-axis filtering.
-        float mouseY =
-            Input.GetAxisRaw("Mouse Y") * mouseSensitivity;
+        float minimum =
+            flipping ? flipMinPitch : minPitch;
 
-        pitch -= mouseY;
+        float maximum =
+            flipping ? flipMaxPitch : maxPitch;
+
+        if (Cursor.lockState == CursorLockMode.Locked)
+        {
+            pitch -=
+                Input.GetAxisRaw("Mouse Y") *
+                mouseSensitivity;
+        }
 
         pitch = Mathf.Clamp(
             pitch,
-            minPitch,
-            maxPitch
+            minimum,
+            maximum
         );
+
+        transform.localRotation =
+            Quaternion.Euler(pitch, 0f, 0f);
+    }
+
+    public void SetPitch(float newPitch)
+    {
+        pitch = newPitch;
 
         transform.localRotation =
             Quaternion.Euler(pitch, 0f, 0f);

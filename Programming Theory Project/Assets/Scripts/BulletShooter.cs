@@ -2,6 +2,7 @@
 using System.Collections;
 using UnityEngine;
 
+[DefaultExecutionOrder(200)]
 public class BulletShooter : MonoBehaviour
 {
     [Header("Shooting")]
@@ -29,7 +30,7 @@ public class BulletShooter : MonoBehaviour
             aimCamera = Camera.main;
     }
 
-    private void Update()
+    private void LateUpdate()
     {
         if (Input.GetMouseButtonDown(0) && canShoot)
         {
@@ -52,7 +53,7 @@ public class BulletShooter : MonoBehaviour
 
     private void Fire()
     {
-        // 1. Raycast from the center of the screen.
+        // Raycast from the final camera view.
         Ray cameraRay = aimCamera.ViewportPointToRay(
             new Vector3(0.5f, 0.5f, 0f)
         );
@@ -84,18 +85,19 @@ public class BulletShooter : MonoBehaviour
             );
         }
 
-        // 2. Bullet always spawns from the gun.
-        Vector3 spawnPosition = bulletSpawnPoint.position;
+        // Bullet always spawns from the gun.
+        Vector3 spawnPosition =
+            bulletSpawnPoint.position;
 
-        // 3. Calculate direction from gun to aim point.
-        Vector3 direction = aimPoint - spawnPosition;
+        // Aim from the gun toward the camera target.
+        Vector3 direction =
+            aimPoint - spawnPosition;
 
         if (direction.sqrMagnitude < 0.0001f)
             direction = cameraRay.direction;
         else
             direction.Normalize();
 
-        // 4. Debug the camera ray and bullet trajectory.
         if (showDebugRays)
         {
             Debug.DrawLine(
@@ -119,7 +121,6 @@ public class BulletShooter : MonoBehaviour
             " | Aim point: " + aimPoint
         );
 
-        // 5. Spawn visual bullet.
         Quaternion bulletRotation =
             bulletSpawnPoint.rotation;
 
@@ -129,8 +130,9 @@ public class BulletShooter : MonoBehaviour
             bulletRotation
         );
 
-        // 6. Move toward the calculated aim point.
-        StartCoroutine(MoveBullet(bullet, direction));
+        StartCoroutine(
+            MoveBullet(bullet, direction)
+        );
     }
 
     private IEnumerator MoveBullet(
@@ -139,7 +141,8 @@ public class BulletShooter : MonoBehaviour
     {
         float distanceTraveled = 0f;
 
-        while (bullet != null && distanceTraveled < range)
+        while (bullet != null &&
+               distanceTraveled < range)
         {
             float moveDistance =
                 bulletSpeed * Time.deltaTime;
@@ -152,7 +155,6 @@ public class BulletShooter : MonoBehaviour
             Vector3 currentPosition =
                 bullet.transform.position;
 
-            // Check collisions along the bullet's path.
             if (Physics.Raycast(
                 currentPosition,
                 direction,

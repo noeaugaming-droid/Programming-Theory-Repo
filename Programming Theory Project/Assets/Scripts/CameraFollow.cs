@@ -5,585 +5,751 @@ using UnityEngine;
 [RequireComponent(typeof(Camera))]
 public class CameraFollow : MonoBehaviour
 {
-    [Header("Follow")]
+    [Header("References")]
     [SerializeField] private Transform cameraPivot;
+    [SerializeField] private Transform playerVisual;
+
+    [Header("Normal Camera")]
     [SerializeField]
     private Vector3 cameraOffset =
-        new Vector3(0f, 1f, -5f);
+        new Vector3(7f, 5f, -5f);
 
-    [Header("Follow Smoothing")]
-    [Range(0.01f, 0.5f)]
-    [SerializeField] private float horizontalSmoothTime = 0.035f;
-    [Range(0.01f, 0.5f)]
-    [SerializeField] private float verticalSmoothTime = 0.06f;
-    [Range(0.01f, 0.5f)]
-    [SerializeField] private float dashSmoothTime = 0.10f;
+    [SerializeField] private float horizontalSmoothTime = 0.1f;
+    [SerializeField] private float verticalSmoothTime = 0.1f;
 
-    [Header("Automatic Recovery")]
-    [SerializeField] private float maxFollowDistance = 15f;
-    [SerializeField] private float teleportDetectionDistance = 8f;
+    [Header("Flip Target Tracking")]
+    [SerializeField] private bool enableFlipTracking = true;
+    [SerializeField] private float trackingRange = 150f;
+    [SerializeField] private bool allowMouseRetargeting = true;
 
-    [Header("Movement Effects")]
-    [SerializeField] private float dashThreshold = 15f;
-    [SerializeField] private float jumpThreshold = 1f;
+    [Header("Gradual Camera Rotation - Flip Only")]
+    [SerializeField] private float flipRotationSmoothTime = 0.4f;
+    [SerializeField] private float maxFlipRotationSpeed = 540f;
+    [SerializeField] private float crosshairFreedomRadius = 100f;
 
-    [Header("Field of View")]
-    [SerializeField] private float normalFOV = 60f;
-    [SerializeField] private float jumpFOV = 65f;
-    [SerializeField] private float dashFOV = 75f;
-    [SerializeField] private float fovSpeed = 6f;
+    [Header("Flip Camera Movement")]
+    [SerializeField] private float flipCameraLift = 0.65f;
+    [SerializeField] private float flipCameraForwardTravel = 0.35f;
+    [SerializeField] private float flipSmoothTime = 0.06f;
 
-    [Header("Collision")]
+    [Header("Gradual Player Rotation")]
+    [Range(0f, 1f)]
+    [SerializeField] private float bodyFlipStrength = 1f;
+
+    [Range(0f, 1f)]
+    [SerializeField] private float targetFacingStrength = 1f;
+
+    [Tooltip("How quickly the character can turn toward the target.")]
+    [SerializeField] private float bodyTurnSpeed = 540f;
+
+    [Header("Camera Collision")]
     [SerializeField] private bool enableCameraCollision = true;
-    [SerializeField] private float cameraRadius = 0.25f;
+    [SerializeField] private float cameraRadius = 0.3f;
     [SerializeField] private float wallOffset = 0.1f;
     [SerializeField] private LayerMask collisionLayers = ~0;
 
-    [Header("Front / Back Flip Top View")]
-    [SerializeField] private bool enableFlipTopView = true;
-    [SerializeField] private float flipTopHeight = 7f;
-    [SerializeField] private float flipTopBackDistance = 2.5f;
-    [SerializeField] private float flipLookDownDistance = 3f;
+    [Header("FOV")]
+    [SerializeField] private float normalFOV = 90f;
+    [SerializeField] private float jumpFOV = 65f;
+    [SerializeField] private float dashFOV = 120f;
+    [SerializeField] private float dashThreshold = 15f;
+    [SerializeField] private float jumpThreshold = 1f;
+    [SerializeField] private float fovSpeed = 6f;
 
-    [Range(0.05f, 1f)]
-    [SerializeField] private float flipTransitionInTime = 0.35f;
-
-    [Range(0.05f, 1f)]
-    [SerializeField] private float flipTransitionOutTime = 0.35f;
-
-    [Range(0.01f, 0.3f)]
-    [SerializeField] private float flipPositionSmoothTime = 0.04f;
-
+    private Camera cam;
+    private PlayerController controller;
+    private CameraLook cameraLook;
     private Rigidbody playerRb;
-    private PlayerController playerController;
-    private Camera playerCamera;
+    private Transform playerRoot;
 
-    private Vector3 smoothedPosition;
-    private Vector3 positionVelocity;
+    private Vector3 followPosition;
+    private Vector3 followVelocity;
 
-    private float flipBlend;
-    private float flipBlendVelocity;
+    private Quaternion originalVisualLocalRotation;
 
-    private Vector3 lastPivotPosition;
-    private Vector3 lastValidCameraPosition;
-    private Quaternion lastValidCameraRotation;
+    private Vector3 lockedHitPoint;
 
-    private bool initialized;
-    private bool warnedInvalidTarget;
+    private bool flipTrackingActive;
 
-    private static bool IsFinite(float value)
-    {
-        return !float.IsNaN(value) &&
-               !float.IsInfinity(value);
-    }
+    private float previousMouseYaw;
+    private float previousMousePitch;
 
-    private static bool IsFinite(Vector3 value)
-    {
-        return IsFinite(value.x) &&
-               IsFinite(value.y) &&
-               IsFinite(value.z);
-    }
+    private Quaternion flipStartFacing;
+    private Quaternion currentBodyFacing;
 
-    private static bool IsFinite(Quaternion value)
-    {
-        return IsFinite(value.x) &&
-               IsFinite(value.y) &&
-               IsFinite(value.z) &&
-               IsFinite(value.w);
-    }
+    private float rotationSpeedVelocity;
+    private float currentRotationSpeed;
+
+    public bool IsTrackingFlip => flipTrackingActive;
+
+    public bool IsOverheadActive => false;
+    public float OverheadBlend => 0f;
+
+    public Vector3 LockedHitPoint => lockedHitPoint;
+
+    public float CrosshairFreedomRadius =>
+        crosshairFreedomRadius;
 
     private void Awake()
     {
-        playerCamera = GetComponent<Camera>();
+        cam = GetComponent<Camera>();
+        ResolveReferences();
     }
 
     private void Start()
     {
-        InitializeCamera();
-    }
-
-    private void OnEnable()
-    {
-        initialized = false;
-        warnedInvalidTarget = false;
-        positionVelocity = Vector3.zero;
-        flipBlendVelocity = 0f;
-    }
-
-    private void InitializeCamera()
-    {
         if (cameraPivot == null)
         {
             Debug.LogError(
-                "CameraFollow: Assign Camera Pivot."
+                "CameraFollow: Camera Pivot is missing.",
+                this
             );
+
+            enabled = false;
             return;
         }
+
+        followPosition = cameraPivot.position;
+
+        transform.SetPositionAndRotation(
+            followPosition +
+                cameraPivot.rotation * cameraOffset,
+            cameraPivot.rotation
+        );
+
+        cam.fieldOfView = normalFOV;
+    }
+
+    private void ResolveReferences()
+    {
+        if (cameraPivot == null)
+            return;
+
+        controller =
+            cameraPivot.GetComponentInParent<PlayerController>();
+
+        cameraLook =
+            cameraPivot.GetComponent<CameraLook>();
 
         playerRb =
             cameraPivot.GetComponentInParent<Rigidbody>();
 
-        playerController =
-            cameraPivot.GetComponentInParent<PlayerController>();
-
-        if (playerRb == null)
+        if (controller != null)
         {
-            Debug.LogError(
-                "CameraFollow: Player Rigidbody missing."
-            );
-            return;
+            playerRoot = controller.transform;
+
+            if (playerVisual == null)
+                playerVisual = controller.VisualModel;
+        }
+        else
+        {
+            playerRoot = cameraPivot.root;
         }
 
-        if (playerCamera == null)
-            playerCamera = GetComponent<Camera>();
-
-        Vector3 pivotPosition = cameraPivot.position;
-
-        if (!IsFinite(pivotPosition) ||
-            !IsFinite(cameraPivot.rotation))
+        if (playerVisual != null)
         {
-            Debug.LogError(
-                "CameraFollow: Player CameraPivot has " +
-                "invalid position or rotation."
-            );
-            return;
+            originalVisualLocalRotation =
+                playerVisual.localRotation;
         }
-
-        Vector3 desiredPosition =
-            cameraPivot.TransformPoint(cameraOffset);
-
-        if (!IsFinite(desiredPosition))
-        {
-            Debug.LogError(
-                "CameraFollow: Invalid Camera Offset or " +
-                "CameraPivot transform."
-            );
-            return;
-        }
-
-        positionVelocity = Vector3.zero;
-        flipBlend = 0f;
-        flipBlendVelocity = 0f;
-
-        lastPivotPosition = pivotPosition;
-
-        smoothedPosition = desiredPosition;
-
-        Vector3 safePosition = GetSafeCameraPosition(
-            pivotPosition,
-            desiredPosition
-        );
-
-        if (!IsFinite(safePosition))
-            safePosition = desiredPosition;
-
-        transform.position = safePosition;
-        transform.rotation = cameraPivot.rotation;
-
-        lastValidCameraPosition = safePosition;
-        lastValidCameraRotation = cameraPivot.rotation;
-
-        playerCamera.fieldOfView = normalFOV;
-
-        warnedInvalidTarget = false;
-        initialized = true;
     }
 
     private void LateUpdate()
     {
-        if (!initialized)
-        {
-            InitializeCamera();
+        if (cameraPivot == null)
+            return;
 
-            if (!initialized)
-                return;
+        bool flipping =
+            enableFlipTracking &&
+            controller != null &&
+            controller.IsFlipping;
+
+        if (flipping && !flipTrackingActive)
+        {
+            BeginFlipTracking();
         }
 
-        if (cameraPivot == null || playerRb == null)
+        UpdateFollowPosition(flipping);
+
+        if (flipping)
         {
-            initialized = false;
+            UpdateMouseRetargeting();
+            UpdateSoftFlipCamera();
+            UpdatePlayerVisual();
+        }
+        else
+        {
+            if (flipTrackingActive)
+            {
+                EndFlipTracking();
+            }
+
+            UpdateNormalCamera();
+        }
+
+        UpdateFOV();
+    }
+
+    // ==================================================
+    // TARGET CAPTURE
+    // ==================================================
+
+    private void BeginFlipTracking()
+    {
+        Ray ray = new Ray(
+            transform.position,
+            transform.forward
+        );
+
+        lockedHitPoint = FindRaycastTarget(ray);
+
+        flipTrackingActive = true;
+
+        previousMouseYaw = controller.MouseYaw;
+
+        previousMousePitch =
+            cameraLook != null
+            ? cameraLook.Pitch
+            : 0f;
+
+        currentRotationSpeed = 0f;
+        rotationSpeedVelocity = 0f;
+
+        if (playerVisual != null)
+        {
+            flipStartFacing =
+                playerVisual.rotation *
+                Quaternion.Inverse(
+                    originalVisualLocalRotation
+                );
+
+            currentBodyFacing = flipStartFacing;
+        }
+        else
+        {
+            flipStartFacing =
+                controller.transform.rotation;
+
+            currentBodyFacing = flipStartFacing;
+        }
+    }
+
+    private Vector3 FindRaycastTarget(Ray ray)
+    {
+        RaycastHit[] hits = Physics.RaycastAll(
+            ray,
+            trackingRange,
+            ~0,
+            QueryTriggerInteraction.Ignore
+        );
+
+        float nearest = trackingRange;
+
+        Vector3 point =
+            ray.GetPoint(trackingRange);
+
+        foreach (RaycastHit hit in hits)
+        {
+            if (hit.collider == null)
+                continue;
+
+            if (playerRoot != null &&
+                hit.collider.transform.IsChildOf(playerRoot))
+            {
+                continue;
+            }
+
+            if (hit.distance < nearest)
+            {
+                nearest = hit.distance;
+                point = hit.point;
+            }
+        }
+
+        return point;
+    }
+
+    // ==================================================
+    // MOUSE RETARGETING
+    // ==================================================
+
+    private void UpdateMouseRetargeting()
+    {
+        float yaw = controller.MouseYaw;
+
+        float pitch =
+            cameraLook != null
+            ? cameraLook.Pitch
+            : previousMousePitch;
+
+        float yawDelta =
+            Mathf.DeltaAngle(
+                previousMouseYaw,
+                yaw
+            );
+
+        float pitchDelta =
+            pitch - previousMousePitch;
+
+        previousMouseYaw = yaw;
+        previousMousePitch = pitch;
+
+        if (!allowMouseRetargeting)
+            return;
+
+        if (Mathf.Abs(yawDelta) < 0.00001f &&
+            Mathf.Abs(pitchDelta) < 0.00001f)
+        {
             return;
         }
 
-        Vector3 pivotPosition = cameraPivot.position;
+        Vector3 stick =
+            lockedHitPoint - transform.position;
 
-        // Reject invalid player transforms before doing
-        // any camera position calculations.
-        if (!IsFinite(pivotPosition) ||
-            !IsFinite(cameraPivot.rotation) ||
-            !IsFinite(playerRb.transform.position) ||
-            !IsFinite(playerRb.transform.rotation))
-        {
-            RecoverFromInvalidTarget();
+        float distance = stick.magnitude;
+
+        if (distance < 0.001f)
             return;
-        }
 
-        bool frontOrBackFlip = false;
-
-        if (enableFlipTopView &&
-            playerController != null &&
-            playerController.IsFlipping)
-        {
-            frontOrBackFlip =
-                playerController.CurrentTrick ==
-                    PlayerController.TrickType.FrontFlip ||
-                playerController.CurrentTrick ==
-                    PlayerController.TrickType.BackFlip;
-        }
-
-        float targetBlend = frontOrBackFlip ? 1f : 0f;
-
-        float transitionTime = frontOrBackFlip
-            ? flipTransitionInTime
-            : flipTransitionOutTime;
-
-        transitionTime = Mathf.Max(
-            0.01f,
-            transitionTime
-        );
-
-        // Reset any corrupted smoothing state.
-        if (!IsFinite(flipBlend) ||
-            !IsFinite(flipBlendVelocity))
-        {
-            flipBlend = 0f;
-            flipBlendVelocity = 0f;
-        }
-
-        flipBlend = Mathf.SmoothDamp(
-            flipBlend,
-            targetBlend,
-            ref flipBlendVelocity,
-            transitionTime
-        );
-
-        if (!IsFinite(flipBlend) ||
-            !IsFinite(flipBlendVelocity))
-        {
-            flipBlend = targetBlend;
-            flipBlendVelocity = 0f;
-        }
-
-        flipBlend = Mathf.Clamp01(flipBlend);
-
-        // NORMAL CAMERA
-        Vector3 normalPosition =
-            cameraPivot.TransformPoint(cameraOffset);
-
-        Quaternion normalRotation =
-            cameraPivot.rotation;
-
-        // FRONT/BACK FLIP OVERHEAD CAMERA
-        Transform playerTransform = playerRb.transform;
-
-        Vector3 topPosition =
-            pivotPosition +
-            Vector3.up * flipTopHeight -
-            playerTransform.forward * flipTopBackDistance;
-
-        Vector3 topLookTarget =
-            playerTransform.position -
-            Vector3.up * flipLookDownDistance;
-
-        Vector3 topDirection =
-            topLookTarget - topPosition;
-
-        Quaternion topRotation = normalRotation;
-
-        if (IsFinite(topDirection) &&
-            topDirection.sqrMagnitude > 0.0001f)
-        {
-            topRotation = Quaternion.LookRotation(
-                topDirection,
+        Quaternion yawRotation =
+            Quaternion.AngleAxis(
+                yawDelta,
                 Vector3.up
             );
-        }
 
-        Vector3 desiredPosition = Vector3.Lerp(
-            normalPosition,
-            topPosition,
-            flipBlend
-        );
-
-        Quaternion desiredRotation = Quaternion.Slerp(
-            normalRotation,
-            topRotation,
-            flipBlend
-        );
-
-        if (!IsFinite(desiredPosition) ||
-            !IsFinite(desiredRotation))
-        {
-            RecoverFromInvalidTarget();
-            return;
-        }
-
-        warnedInvalidTarget = false;
-
-        // Detect teleports and large camera separations.
-        bool teleported =
-            Vector3.Distance(
-                pivotPosition,
-                lastPivotPosition
-            ) > Mathf.Max(0.1f, teleportDetectionDistance);
-
-        lastPivotPosition = pivotPosition;
-
-        bool tooFar =
-            !IsFinite(transform.position) ||
-            Vector3.Distance(
-                transform.position,
-                desiredPosition
-            ) > Mathf.Max(1f, maxFollowDistance);
-
-        if (teleported || tooFar)
-        {
-            SnapToTarget(
-                pivotPosition,
-                desiredPosition,
-                desiredRotation
+        Quaternion pitchRotation =
+            Quaternion.AngleAxis(
+                pitchDelta,
+                transform.right
             );
 
-            UpdateFOV(frontOrBackFlip);
-            return;
-        }
+        Vector3 direction =
+            yawRotation *
+            pitchRotation *
+            stick.normalized;
 
-        // Check smoothing state before SmoothDamp.
-        if (!IsFinite(smoothedPosition) ||
-            !IsFinite(positionVelocity))
-        {
-            smoothedPosition = desiredPosition;
-            positionVelocity = Vector3.zero;
-        }
+        lockedHitPoint =
+            transform.position +
+            direction.normalized * distance;
+    }
 
-        Vector3 horizontalMovement =
-            playerRb.linearVelocity;
+    // ==================================================
+    // CAMERA POSITION
+    // ==================================================
 
-        horizontalMovement.y = 0f;
+    private void UpdateFollowPosition(bool flipping)
+    {
+        Vector3 target = cameraPivot.position;
 
-        bool isDashing =
-            IsFinite(horizontalMovement) &&
-            horizontalMovement.magnitude > dashThreshold;
-
-        float followTime = isDashing
-            ? dashSmoothTime
+        float horizontalTime =
+            flipping
+            ? flipSmoothTime
             : horizontalSmoothTime;
 
-        followTime = Mathf.Lerp(
-            Mathf.Max(0.01f, followTime),
-            Mathf.Max(0.01f, flipPositionSmoothTime),
-            flipBlend
+        float verticalTime =
+            flipping
+            ? flipSmoothTime
+            : verticalSmoothTime;
+
+        horizontalTime =
+            Mathf.Max(0.0001f, horizontalTime);
+
+        verticalTime =
+            Mathf.Max(0.0001f, verticalTime);
+
+        followPosition.x = Mathf.SmoothDamp(
+            followPosition.x,
+            target.x,
+            ref followVelocity.x,
+            horizontalTime
         );
 
-        float verticalTime = Mathf.Lerp(
-            Mathf.Max(0.01f, verticalSmoothTime),
-            Mathf.Max(0.01f, flipPositionSmoothTime),
-            flipBlend
+        followPosition.y = Mathf.SmoothDamp(
+            followPosition.y,
+            target.y,
+            ref followVelocity.y,
+            verticalTime
         );
 
-        // One consistent smoothing velocity avoids
-        // competing SmoothDamp calculations.
-        Vector3 nextPosition = new Vector3(
-            Mathf.SmoothDamp(
-                smoothedPosition.x,
-                desiredPosition.x,
-                ref positionVelocity.x,
-                followTime
-            ),
-            Mathf.SmoothDamp(
-                smoothedPosition.y,
-                desiredPosition.y,
-                ref positionVelocity.y,
-                verticalTime
-            ),
-            Mathf.SmoothDamp(
-                smoothedPosition.z,
-                desiredPosition.z,
-                ref positionVelocity.z,
-                followTime
-            )
+        followPosition.z = Mathf.SmoothDamp(
+            followPosition.z,
+            target.z,
+            ref followVelocity.z,
+            horizontalTime
         );
-
-        // Never allow NaN into the Transform.
-        if (!IsFinite(nextPosition) ||
-            !IsFinite(positionVelocity))
-        {
-            smoothedPosition = desiredPosition;
-            positionVelocity = Vector3.zero;
-            nextPosition = desiredPosition;
-        }
-
-        smoothedPosition = nextPosition;
-
-        Vector3 safePosition = GetSafeCameraPosition(
-            pivotPosition,
-            nextPosition
-        );
-
-        if (!IsFinite(safePosition))
-        {
-            SnapToTarget(
-                pivotPosition,
-                desiredPosition,
-                desiredRotation
-            );
-
-            UpdateFOV(frontOrBackFlip);
-            return;
-        }
-
-        transform.position = safePosition;
-
-        // Normal mouse aiming has no rotation smoothing.
-        // Flip transitions remain smooth through flipBlend.
-        transform.rotation = desiredRotation;
-
-        lastValidCameraPosition = safePosition;
-        lastValidCameraRotation = desiredRotation;
-
-        UpdateFOV(frontOrBackFlip);
     }
 
-    private Vector3 GetSafeCameraPosition(
-        Vector3 origin,
-        Vector3 desiredPosition
-    )
+    private void UpdateNormalCamera()
     {
-        if (!IsFinite(origin) ||
-            !IsFinite(desiredPosition))
-        {
-            return lastValidCameraPosition;
-        }
+        Quaternion rotation =
+            cameraPivot.rotation;
 
-        if (!enableCameraCollision)
-            return desiredPosition;
+        Vector3 position =
+            followPosition +
+            rotation * cameraOffset;
 
-        Vector3 direction = desiredPosition - origin;
+        position = ResolveCameraCollision(
+            followPosition,
+            position
+        );
 
-        float distance = direction.magnitude;
-
-        if (!IsFinite(distance) || distance < 0.001f)
-            return desiredPosition;
-
-        direction /= distance;
-
-        float radius = Mathf.Max(0.01f, cameraRadius);
-
-        if (Physics.SphereCast(
-            origin,
-            radius,
-            direction,
-            out RaycastHit hit,
-            distance,
-            collisionLayers,
-            QueryTriggerInteraction.Ignore))
-        {
-            float safeDistance = Mathf.Max(
-                0f,
-                hit.distance - Mathf.Max(0f, wallOffset)
-            );
-
-            if (IsFinite(safeDistance))
-                return origin + direction * safeDistance;
-        }
-
-        return desiredPosition;
+        transform.SetPositionAndRotation(
+            position,
+            rotation
+        );
     }
 
-    private void SnapToTarget(
-        Vector3 origin,
-        Vector3 desiredPosition,
-        Quaternion desiredRotation
-    )
-    {
-        positionVelocity = Vector3.zero;
-        smoothedPosition = desiredPosition;
+    // ==================================================
+    // SMOOTH CAMERA ROTATION
+    // ==================================================
 
-        Vector3 safePosition = GetSafeCameraPosition(
-            origin,
+    private void UpdateSoftFlipCamera()
+    {
+        float progress = controller.FlipProgress;
+
+        float arc =
+            Mathf.Sin(progress * Mathf.PI);
+
+        Vector3 normalOffset =
+            cameraPivot.rotation * cameraOffset;
+
+        Vector3 forward =
+            cameraPivot.rotation * Vector3.forward;
+
+        Vector3 desiredPosition =
+            followPosition +
+            normalOffset +
+            Vector3.up *
+                (arc * flipCameraLift) +
+            forward *
+                (arc * flipCameraForwardTravel);
+
+        desiredPosition = ResolveCameraCollision(
+            followPosition,
             desiredPosition
         );
 
-        if (!IsFinite(safePosition))
-            safePosition = lastValidCameraPosition;
+        Vector3 toTarget =
+            lockedHitPoint - desiredPosition;
 
-        if (IsFinite(safePosition))
-        {
-            transform.position = safePosition;
-            lastValidCameraPosition = safePosition;
-        }
+        if (toTarget.sqrMagnitude < 0.0001f)
+            toTarget = transform.forward;
 
-        if (IsFinite(desiredRotation))
-        {
-            transform.rotation = desiredRotation;
-            lastValidCameraRotation = desiredRotation;
-        }
-    }
-
-    private void RecoverFromInvalidTarget()
-    {
-        positionVelocity = Vector3.zero;
-        flipBlendVelocity = 0f;
-        flipBlend = 0f;
-
-        if (IsFinite(lastValidCameraPosition))
-            transform.position = lastValidCameraPosition;
-
-        if (IsFinite(lastValidCameraRotation))
-            transform.rotation = lastValidCameraRotation;
-
-        if (!warnedInvalidTarget)
-        {
-            Debug.LogWarning(
-                "CameraFollow: Invalid camera target detected. " +
-                "Camera held at its last valid position. " +
-                "Check Player, CameraPivot, and camera settings."
+        Quaternion desiredRotation =
+            Quaternion.LookRotation(
+                toTarget.normalized,
+                Vector3.up
             );
 
-            warnedInvalidTarget = true;
+        float smoothTime =
+            Mathf.Max(
+                0.01f,
+                flipRotationSmoothTime
+            );
+
+        float angularError =
+            Quaternion.Angle(
+                transform.rotation,
+                desiredRotation
+            );
+
+        currentRotationSpeed =
+            Mathf.SmoothDamp(
+                currentRotationSpeed,
+                angularError / smoothTime,
+                ref rotationSpeedVelocity,
+                smoothTime
+            );
+
+        float maxStep =
+            Mathf.Min(
+                maxFlipRotationSpeed,
+                Mathf.Max(
+                    0f,
+                    currentRotationSpeed
+                )
+            ) * Time.deltaTime;
+
+        Quaternion newRotation =
+            Quaternion.RotateTowards(
+                transform.rotation,
+                desiredRotation,
+                maxStep
+            );
+
+        // Give the crosshair room to move.
+        // Increase camera catch-up if it reaches
+        // the edge of its freedom zone.
+        Vector3 screenPoint =
+            cam.WorldToScreenPoint(lockedHitPoint);
+
+        if (screenPoint.z > 0f)
+        {
+            Vector2 screenCenter =
+                new Vector2(
+                    Screen.width * 0.5f,
+                    Screen.height * 0.5f
+                );
+
+            float drift =
+                Vector2.Distance(
+                    new Vector2(
+                        screenPoint.x,
+                        screenPoint.y
+                    ),
+                    screenCenter
+                );
+
+            if (drift > crosshairFreedomRadius)
+            {
+                float extra =
+                    Mathf.Clamp01(
+                        (drift - crosshairFreedomRadius) /
+                        Mathf.Max(
+                            1f,
+                            crosshairFreedomRadius
+                        )
+                    );
+
+                newRotation =
+                    Quaternion.Slerp(
+                        newRotation,
+                        desiredRotation,
+                        extra
+                    );
+            }
         }
+
+        transform.SetPositionAndRotation(
+            desiredPosition,
+            newRotation
+        );
     }
 
-    private void UpdateFOV(bool frontOrBackFlip)
+    // ==================================================
+    // GRADUAL PLAYER ROTATION
+    // ==================================================
+
+    private void UpdatePlayerVisual()
     {
-        if (playerCamera == null)
-            return;
-
-        Vector3 velocity = playerRb.linearVelocity;
-
-        bool validVelocity = IsFinite(velocity);
-
-        bool isDashing = false;
-        bool isJumping = false;
-
-        if (validVelocity)
+        if (playerVisual == null ||
+            controller == null)
         {
-            Vector3 horizontal = velocity;
-            horizontal.y = 0f;
-
-            isDashing =
-                horizontal.magnitude > dashThreshold;
-
-            isJumping =
-                velocity.y > jumpThreshold;
+            return;
         }
+
+        float progress = controller.FlipProgress;
+
+        Vector3 toTarget =
+            lockedHitPoint - playerVisual.position;
+
+        if (toTarget.sqrMagnitude < 0.0001f)
+            toTarget = transform.forward;
+
+        Quaternion targetFacing =
+            Quaternion.LookRotation(
+                toTarget.normalized,
+                Vector3.up
+            );
+
+        // Gradually change facing throughout
+        // the flip instead of waiting until
+        // the final frame.
+        float facingBlend =
+            Mathf.SmoothStep(
+                0f,
+                targetFacingStrength,
+                progress
+            );
+
+        Quaternion desiredBodyFacing =
+            Quaternion.Slerp(
+                flipStartFacing,
+                targetFacing,
+                facingBlend
+            );
+
+        // Prevent sudden changes if the target
+        // direction changes during the flip.
+        currentBodyFacing =
+            Quaternion.RotateTowards(
+                currentBodyFacing,
+                desiredBodyFacing,
+                bodyTurnSpeed * Time.deltaTime
+            );
+
+        // Continuous gymnastics rotation.
+        // This is based on an angle rather than
+        // interpolating between two different
+        // 360-degree quaternion rotations.
+        Vector3 flipAxis;
+
+        switch (controller.CurrentTrick)
+        {
+            case PlayerController.TrickType.CartwheelLeft:
+            case PlayerController.TrickType.CartwheelRight:
+                flipAxis = Vector3.forward;
+                break;
+
+            default:
+                flipAxis = Vector3.right;
+                break;
+        }
+
+        float angle =
+            controller.FlipAngle *
+            bodyFlipStrength;
+
+        Quaternion flipRotation =
+            Quaternion.AngleAxis(
+                angle,
+                flipAxis
+            );
+
+        playerVisual.rotation =
+            currentBodyFacing *
+            flipRotation *
+            originalVisualLocalRotation;
+    }
+
+    // ==================================================
+    // END FLIP
+    // ==================================================
+
+    private void EndFlipTracking()
+    {
+        // Keep the final camera direction when
+        // normal mouse control resumes.
+        Vector3 forward = transform.forward;
+
+        float yaw =
+            Mathf.Atan2(
+                forward.x,
+                forward.z
+            ) * Mathf.Rad2Deg;
+
+        float pitch =
+            -Mathf.Asin(
+                Mathf.Clamp(
+                    forward.y,
+                    -1f,
+                    1f
+                )
+            ) * Mathf.Rad2Deg;
+
+        controller.SetMouseYaw(yaw);
+
+        if (cameraLook != null)
+            cameraLook.SetPitch(pitch);
+
+        cameraPivot.rotation =
+            Quaternion.Euler(0f, yaw, 0f) *
+            Quaternion.Euler(pitch, 0f, 0f);
+
+        flipTrackingActive = false;
+    }
+
+    // ==================================================
+    // COLLISION
+    // ==================================================
+
+    private Vector3 ResolveCameraCollision(
+        Vector3 origin,
+        Vector3 desired)
+    {
+        if (!enableCameraCollision)
+            return desired;
+
+        Vector3 offset = desired - origin;
+
+        float distance = offset.magnitude;
+
+        if (distance < 0.0001f)
+            return desired;
+
+        Vector3 direction = offset / distance;
+
+        RaycastHit[] hits = Physics.SphereCastAll(
+            origin,
+            Mathf.Max(
+                0.01f,
+                cameraRadius
+            ),
+            direction,
+            distance,
+            collisionLayers,
+            QueryTriggerInteraction.Ignore
+        );
+
+        float nearest = distance;
+        bool blocked = false;
+
+        foreach (RaycastHit hit in hits)
+        {
+            if (hit.collider == null)
+                continue;
+
+            if (playerRoot != null &&
+                hit.collider.transform.IsChildOf(playerRoot))
+            {
+                continue;
+            }
+
+            if (hit.distance < nearest)
+            {
+                nearest = hit.distance;
+                blocked = true;
+            }
+        }
+
+        if (!blocked)
+            return desired;
+
+        return origin +
+            direction *
+            Mathf.Max(
+                0f,
+                nearest - wallOffset
+            );
+    }
+
+    // ==================================================
+    // FIELD OF VIEW
+    // ==================================================
+
+    private void UpdateFOV()
+    {
+        if (cam == null)
+            return;
 
         float targetFOV = normalFOV;
 
-        if (isDashing)
-            targetFOV = dashFOV;
-        else if (isJumping || frontOrBackFlip)
-            targetFOV = jumpFOV;
+        if (playerRb != null)
+        {
+            Vector3 velocity =
+                playerRb.linearVelocity;
 
-        if (!IsFinite(playerCamera.fieldOfView))
-            playerCamera.fieldOfView = normalFOV;
+            if (velocity.magnitude > dashThreshold)
+            {
+                targetFOV = dashFOV;
+            }
+            else if (
+                Mathf.Abs(velocity.y) > jumpThreshold)
+            {
+                targetFOV = jumpFOV;
+            }
+        }
 
-        playerCamera.fieldOfView = Mathf.Lerp(
-            playerCamera.fieldOfView,
-            targetFOV,
-            Mathf.Clamp01(
-                Mathf.Max(0f, fovSpeed) * Time.deltaTime
-            )
-        );
+        float blend =
+            1f - Mathf.Exp(
+                -Mathf.Max(0f, fovSpeed) *
+                Time.deltaTime
+            );
+
+        cam.fieldOfView =
+            Mathf.Lerp(
+                cam.fieldOfView,
+                targetFOV,
+                blend
+            );
     }
 }

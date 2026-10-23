@@ -981,6 +981,9 @@ MonoBehaviour:
   mouseSensitivity: 2
   minPitch: -60
   maxPitch: 60
+  flipMinPitch: -170
+  flipMaxPitch: 170
+  playerController: {fileID: 0}
 --- !u!1 &322262435
 GameObject:
   m_ObjectHideFlags: 0
@@ -1393,6 +1396,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 97a579028a7a9f04a9e3311f8a58434c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  visualModel: {fileID: 233048236}
+  cameraPivot: {fileID: 311949418}
   speed: 10
   mouseSensitivity: 2
   jumpForce: 7
@@ -1400,14 +1405,15 @@ MonoBehaviour:
   dashSpeed: 25
   dashDuration: 0.2
   dashCooldown: 1
-  visualModel: {fileID: 233048236}
   doubleTapWindow: 0.7
-  flipUpwardVelocity: 9
+  flipUpwardVelocity: 13
   flipHorizontalSpeed: 12
-  flipDuration: 0.8
+  flipDuration: 1
   flipGravityMultiplier: 1
   apexVelocityDamping: 1
   apexWindow: 0.5
+  preserveFlipTravelDirection: 1
+  newInputCancelsDirectionLock: 1
 --- !u!114 &608680345
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2360,7 +2366,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0.043619405, y: -0, z: -0, w: 0.9990483}
   m_LocalPosition: {x: 2, y: 1.7980001, z: -2}
-  m_LocalScale: {x: 0.1, y: 0.10683652, z: 0.9931635}
+  m_LocalScale: {x: 0.1, y: 0.10683653, z: 0.9931636}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -2378,31 +2384,34 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   cameraPivot: {fileID: 311949418}
-  cameraOffset: {x: 7, y: 5, z: -5}
+  playerVisual: {fileID: 233048236}
+  cameraOffset: {x: 1, y: 1, z: -5}
   horizontalSmoothTime: 0.1
   verticalSmoothTime: 0.1
-  dashSmoothTime: 0.18
-  maxFollowDistance: 15
-  teleportDetectionDistance: 8
-  dashThreshold: 15
-  jumpThreshold: 1
-  normalFOV: 90
-  jumpFOV: 65
-  dashFOV: 120
-  fovSpeed: 6
+  enableFlipTracking: 1
+  trackingRange: 150
+  allowMouseRetargeting: 1
+  flipRotationSmoothTime: 0.4
+  maxFlipRotationSpeed: 540
+  crosshairFreedomRadius: 5
+  flipCameraLift: 0.65
+  flipCameraForwardTravel: 0.35
+  flipSmoothTime: 0.08
+  bodyFlipStrength: 1
+  targetFacingStrength: 1
+  bodyTurnSpeed: 540
   enableCameraCollision: 1
   cameraRadius: 0.3
   wallOffset: 0.1
   collisionLayers:
     serializedVersion: 2
     m_Bits: 63
-  enableFlipTopView: 1
-  flipTopHeight: 7
-  flipTopBackDistance: 2.5
-  flipLookDownDistance: 3
-  flipTransitionInTime: 0.35
-  flipTransitionOutTime: 0.35
-  flipPositionSmoothTime: 0.08
+  normalFOV: 90
+  jumpFOV: 65
+  dashFOV: 120
+  dashThreshold: 15
+  jumpThreshold: 1
+  fovSpeed: 6
 --- !u!1 &978325867
 GameObject:
   m_ObjectHideFlags: 0
@@ -4313,8 +4322,8 @@ SceneRoots:
   m_Roots:
   - {fileID: 203844589}
   - {fileID: 754635743}
-  - {fileID: 961739753}
   - {fileID: 608680343}
+  - {fileID: 961739753}
   - {fileID: 152783147}
   - {fileID: 867973830}
   - {fileID: 679514827}
