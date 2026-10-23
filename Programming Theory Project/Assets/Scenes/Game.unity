@@ -979,8 +979,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mouseSensitivity: 2
-  minRotation: -60
-  maxRotation: 60
+  minPitch: -60
+  maxPitch: 60
 --- !u!1 &322262435
 GameObject:
   m_ObjectHideFlags: 0
@@ -1401,7 +1401,7 @@ MonoBehaviour:
   dashDuration: 0.2
   dashCooldown: 1
   visualModel: {fileID: 233048236}
-  doubleTapWindow: 0.3
+  doubleTapWindow: 0.7
   flipUpwardVelocity: 9
   flipHorizontalSpeed: 12
   flipDuration: 0.8
@@ -2378,16 +2378,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   cameraPivot: {fileID: 311949418}
-  cameraOffset: {x: 5, y: 1, z: -5}
-  horizontalSmoothTime: 0.2
-  verticalSmoothTime: 0.2
+  cameraOffset: {x: 7, y: 5, z: -5}
+  horizontalSmoothTime: 0.1
+  verticalSmoothTime: 0.1
   dashSmoothTime: 0.18
+  maxFollowDistance: 15
+  teleportDetectionDistance: 8
   dashThreshold: 15
   jumpThreshold: 1
   normalFOV: 90
   jumpFOV: 65
   dashFOV: 120
   fovSpeed: 6
+  enableCameraCollision: 1
   cameraRadius: 0.3
   wallOffset: 0.1
   collisionLayers:
@@ -2400,7 +2403,6 @@ MonoBehaviour:
   flipTransitionInTime: 0.35
   flipTransitionOutTime: 0.35
   flipPositionSmoothTime: 0.08
-  flipRotationSpeed: 10
 --- !u!1 &978325867
 GameObject:
   m_ObjectHideFlags: 0

@@ -2,6 +2,7 @@
 using UnityEngine;
 
 [DefaultExecutionOrder(100)]
+[RequireComponent(typeof(Camera))]
 public class CameraFollow : MonoBehaviour
 {
     [Header("Follow")]
@@ -10,15 +11,17 @@ public class CameraFollow : MonoBehaviour
     private Vector3 cameraOffset =
         new Vector3(0f, 1f, -5f);
 
-    [Header("Camera Follow Delay")]
+    [Header("Follow Smoothing")]
     [Range(0.01f, 0.5f)]
-    [SerializeField] private float horizontalSmoothTime = 0.08f;
+    [SerializeField] private float horizontalSmoothTime = 0.035f;
+    [Range(0.01f, 0.5f)]
+    [SerializeField] private float verticalSmoothTime = 0.06f;
+    [Range(0.01f, 0.5f)]
+    [SerializeField] private float dashSmoothTime = 0.10f;
 
-    [Range(0.01f, 0.5f)]
-    [SerializeField] private float verticalSmoothTime = 0.12f;
-
-    [Range(0.01f, 0.5f)]
-    [SerializeField] private float dashSmoothTime = 0.18f;
+    [Header("Automatic Recovery")]
+    [SerializeField] private float maxFollowDistance = 15f;
+    [SerializeField] private float teleportDetectionDistance = 8f;
 
     [Header("Movement Effects")]
     [SerializeField] private float dashThreshold = 15f;
@@ -31,59 +34,89 @@ public class CameraFollow : MonoBehaviour
     [SerializeField] private float fovSpeed = 6f;
 
     [Header("Collision")]
-    [SerializeField] private float cameraRadius = 0.3f;
+    [SerializeField] private bool enableCameraCollision = true;
+    [SerializeField] private float cameraRadius = 0.25f;
     [SerializeField] private float wallOffset = 0.1f;
     [SerializeField] private LayerMask collisionLayers = ~0;
 
     [Header("Front / Back Flip Top View")]
     [SerializeField] private bool enableFlipTopView = true;
-
-    [Tooltip("How high the camera moves above the player.")]
     [SerializeField] private float flipTopHeight = 7f;
-
-    [Tooltip("How far behind the player the camera stays.")]
     [SerializeField] private float flipTopBackDistance = 2.5f;
-
-    [Tooltip("How far below the player the camera aims.")]
     [SerializeField] private float flipLookDownDistance = 3f;
 
-    [Tooltip("Time to transition into the overhead view.")]
     [Range(0.05f, 1f)]
     [SerializeField] private float flipTransitionInTime = 0.35f;
 
-    [Tooltip("Time to transition back to normal view.")]
     [Range(0.05f, 1f)]
     [SerializeField] private float flipTransitionOutTime = 0.35f;
 
-    [Tooltip("Camera position smoothing while flipping.")]
     [Range(0.01f, 0.3f)]
-    [SerializeField] private float flipPositionSmoothTime = 0.08f;
-
-    [Tooltip("Camera rotation smoothing speed.")]
-    [SerializeField] private float flipRotationSpeed = 10f;
+    [SerializeField] private float flipPositionSmoothTime = 0.04f;
 
     private Rigidbody playerRb;
     private PlayerController playerController;
     private Camera playerCamera;
 
-    private float horizontalVelocityX;
-    private float horizontalVelocityZ;
-    private float verticalVelocity;
-
-    private Vector3 cameraVelocity;
+    private Vector3 smoothedPosition;
+    private Vector3 positionVelocity;
 
     private float flipBlend;
     private float flipBlendVelocity;
 
+    private Vector3 lastPivotPosition;
+    private Vector3 lastValidCameraPosition;
+    private Quaternion lastValidCameraRotation;
+
+    private bool initialized;
+    private bool warnedInvalidTarget;
+
+    private static bool IsFinite(float value)
+    {
+        return !float.IsNaN(value) &&
+               !float.IsInfinity(value);
+    }
+
+    private static bool IsFinite(Vector3 value)
+    {
+        return IsFinite(value.x) &&
+               IsFinite(value.y) &&
+               IsFinite(value.z);
+    }
+
+    private static bool IsFinite(Quaternion value)
+    {
+        return IsFinite(value.x) &&
+               IsFinite(value.y) &&
+               IsFinite(value.z) &&
+               IsFinite(value.w);
+    }
+
+    private void Awake()
+    {
+        playerCamera = GetComponent<Camera>();
+    }
+
     private void Start()
+    {
+        InitializeCamera();
+    }
+
+    private void OnEnable()
+    {
+        initialized = false;
+        warnedInvalidTarget = false;
+        positionVelocity = Vector3.zero;
+        flipBlendVelocity = 0f;
+    }
+
+    private void InitializeCamera()
     {
         if (cameraPivot == null)
         {
             Debug.LogError(
                 "CameraFollow: Assign Camera Pivot."
             );
-
-            enabled = false;
             return;
         }
 
@@ -93,32 +126,98 @@ public class CameraFollow : MonoBehaviour
         playerController =
             cameraPivot.GetComponentInParent<PlayerController>();
 
-        playerCamera = GetComponent<Camera>();
-
-        if (playerRb == null || playerCamera == null)
+        if (playerRb == null)
         {
             Debug.LogError(
-                "CameraFollow requires a Player Rigidbody and Camera."
+                "CameraFollow: Player Rigidbody missing."
             );
-
-            enabled = false;
             return;
         }
 
-        playerCamera.fieldOfView = normalFOV;
+        if (playerCamera == null)
+            playerCamera = GetComponent<Camera>();
 
-        transform.position =
+        Vector3 pivotPosition = cameraPivot.position;
+
+        if (!IsFinite(pivotPosition) ||
+            !IsFinite(cameraPivot.rotation))
+        {
+            Debug.LogError(
+                "CameraFollow: Player CameraPivot has " +
+                "invalid position or rotation."
+            );
+            return;
+        }
+
+        Vector3 desiredPosition =
             cameraPivot.TransformPoint(cameraOffset);
 
+        if (!IsFinite(desiredPosition))
+        {
+            Debug.LogError(
+                "CameraFollow: Invalid Camera Offset or " +
+                "CameraPivot transform."
+            );
+            return;
+        }
+
+        positionVelocity = Vector3.zero;
+        flipBlend = 0f;
+        flipBlendVelocity = 0f;
+
+        lastPivotPosition = pivotPosition;
+
+        smoothedPosition = desiredPosition;
+
+        Vector3 safePosition = GetSafeCameraPosition(
+            pivotPosition,
+            desiredPosition
+        );
+
+        if (!IsFinite(safePosition))
+            safePosition = desiredPosition;
+
+        transform.position = safePosition;
         transform.rotation = cameraPivot.rotation;
+
+        lastValidCameraPosition = safePosition;
+        lastValidCameraRotation = cameraPivot.rotation;
+
+        playerCamera.fieldOfView = normalFOV;
+
+        warnedInvalidTarget = false;
+        initialized = true;
     }
 
     private void LateUpdate()
     {
-        if (playerRb == null || playerCamera == null)
-            return;
+        if (!initialized)
+        {
+            InitializeCamera();
 
-        // Only front and back flips activate top view.
+            if (!initialized)
+                return;
+        }
+
+        if (cameraPivot == null || playerRb == null)
+        {
+            initialized = false;
+            return;
+        }
+
+        Vector3 pivotPosition = cameraPivot.position;
+
+        // Reject invalid player transforms before doing
+        // any camera position calculations.
+        if (!IsFinite(pivotPosition) ||
+            !IsFinite(cameraPivot.rotation) ||
+            !IsFinite(playerRb.transform.position) ||
+            !IsFinite(playerRb.transform.rotation))
+        {
+            RecoverFromInvalidTarget();
+            return;
+        }
+
         bool frontOrBackFlip = false;
 
         if (enableFlipTopView &&
@@ -132,12 +231,24 @@ public class CameraFollow : MonoBehaviour
                     PlayerController.TrickType.BackFlip;
         }
 
-        // Gradually enter or exit the top view.
         float targetBlend = frontOrBackFlip ? 1f : 0f;
 
         float transitionTime = frontOrBackFlip
             ? flipTransitionInTime
             : flipTransitionOutTime;
+
+        transitionTime = Mathf.Max(
+            0.01f,
+            transitionTime
+        );
+
+        // Reset any corrupted smoothing state.
+        if (!IsFinite(flipBlend) ||
+            !IsFinite(flipBlendVelocity))
+        {
+            flipBlend = 0f;
+            flipBlendVelocity = 0f;
+        }
 
         flipBlend = Mathf.SmoothDamp(
             flipBlend,
@@ -146,44 +257,48 @@ public class CameraFollow : MonoBehaviour
             transitionTime
         );
 
+        if (!IsFinite(flipBlend) ||
+            !IsFinite(flipBlendVelocity))
+        {
+            flipBlend = targetBlend;
+            flipBlendVelocity = 0f;
+        }
+
         flipBlend = Mathf.Clamp01(flipBlend);
 
-        // Normal third-person camera target.
+        // NORMAL CAMERA
         Vector3 normalPosition =
             cameraPivot.TransformPoint(cameraOffset);
 
         Quaternion normalRotation =
             cameraPivot.rotation;
 
-        // Top-view position stays relative to player yaw,
-        // not the PlayerVisual's flipping rotation.
+        // FRONT/BACK FLIP OVERHEAD CAMERA
         Transform playerTransform = playerRb.transform;
 
         Vector3 topPosition =
-            cameraPivot.position +
+            pivotPosition +
             Vector3.up * flipTopHeight -
             playerTransform.forward * flipTopBackDistance;
 
-        // Aim below the player so enemies on the ground
-        // remain visible.
         Vector3 topLookTarget =
             playerTransform.position -
             Vector3.up * flipLookDownDistance;
 
-        Vector3 topLookDirection =
+        Vector3 topDirection =
             topLookTarget - topPosition;
 
         Quaternion topRotation = normalRotation;
 
-        if (topLookDirection.sqrMagnitude > 0.0001f)
+        if (IsFinite(topDirection) &&
+            topDirection.sqrMagnitude > 0.0001f)
         {
             topRotation = Quaternion.LookRotation(
-                topLookDirection.normalized,
+                topDirection,
                 Vector3.up
             );
         }
 
-        // Blend camera position and orientation.
         Vector3 desiredPosition = Vector3.Lerp(
             normalPosition,
             topPosition,
@@ -196,158 +311,279 @@ public class CameraFollow : MonoBehaviour
             flipBlend
         );
 
-        // Existing dash / jump effects.
+        if (!IsFinite(desiredPosition) ||
+            !IsFinite(desiredRotation))
+        {
+            RecoverFromInvalidTarget();
+            return;
+        }
+
+        warnedInvalidTarget = false;
+
+        // Detect teleports and large camera separations.
+        bool teleported =
+            Vector3.Distance(
+                pivotPosition,
+                lastPivotPosition
+            ) > Mathf.Max(0.1f, teleportDetectionDistance);
+
+        lastPivotPosition = pivotPosition;
+
+        bool tooFar =
+            !IsFinite(transform.position) ||
+            Vector3.Distance(
+                transform.position,
+                desiredPosition
+            ) > Mathf.Max(1f, maxFollowDistance);
+
+        if (teleported || tooFar)
+        {
+            SnapToTarget(
+                pivotPosition,
+                desiredPosition,
+                desiredRotation
+            );
+
+            UpdateFOV(frontOrBackFlip);
+            return;
+        }
+
+        // Check smoothing state before SmoothDamp.
+        if (!IsFinite(smoothedPosition) ||
+            !IsFinite(positionVelocity))
+        {
+            smoothedPosition = desiredPosition;
+            positionVelocity = Vector3.zero;
+        }
+
         Vector3 horizontalMovement =
             playerRb.linearVelocity;
 
         horizontalMovement.y = 0f;
 
         bool isDashing =
+            IsFinite(horizontalMovement) &&
             horizontalMovement.magnitude > dashThreshold;
 
-        bool isJumping =
-            playerRb.linearVelocity.y > jumpThreshold;
-
-        float horizontalTime = isDashing
+        float followTime = isDashing
             ? dashSmoothTime
             : horizontalSmoothTime;
 
-        // Normal follow smoothing when not in top view.
-        Vector3 normalSmoothedPosition = new Vector3(
-            Mathf.SmoothDamp(
-                transform.position.x,
-                desiredPosition.x,
-                ref horizontalVelocityX,
-                horizontalTime
-            ),
-            Mathf.SmoothDamp(
-                transform.position.y,
-                desiredPosition.y,
-                ref verticalVelocity,
-                verticalSmoothTime
-            ),
-            Mathf.SmoothDamp(
-                transform.position.z,
-                desiredPosition.z,
-                ref horizontalVelocityZ,
-                horizontalTime
-            )
-        );
-
-        // Faster response in overhead mode.
-        Vector3 flipSmoothedPosition =
-            Vector3.SmoothDamp(
-                transform.position,
-                desiredPosition,
-                ref cameraVelocity,
-                flipPositionSmoothTime
-            );
-
-        Vector3 targetPosition = Vector3.Lerp(
-            normalSmoothedPosition,
-            flipSmoothedPosition,
+        followTime = Mathf.Lerp(
+            Mathf.Max(0.01f, followTime),
+            Mathf.Max(0.01f, flipPositionSmoothTime),
             flipBlend
         );
 
-        // Collision between player and camera.
-        Vector3 start = cameraPivot.position;
-        Vector3 direction = targetPosition - start;
-        float distance = direction.magnitude;
+        float verticalTime = Mathf.Lerp(
+            Mathf.Max(0.01f, verticalSmoothTime),
+            Mathf.Max(0.01f, flipPositionSmoothTime),
+            flipBlend
+        );
 
-        if (distance > 0.001f &&
-            Physics.SphereCast(
-                start,
-                cameraRadius,
-                direction.normalized,
-                out RaycastHit hit,
-                distance,
-                collisionLayers,
-                QueryTriggerInteraction.Ignore))
-        {
-            targetPosition =
-                start +
-                direction.normalized *
-                Mathf.Max(
-                    0f,
-                    hit.distance - wallOffset
-                );
-
-            ResetSmoothing();
-        }
-
-        // Prevent camera from passing through walls.
-        Vector3 movement =
-            targetPosition - transform.position;
-
-        float movementDistance = movement.magnitude;
-
-        if (movementDistance > 0.001f &&
-            Physics.SphereCast(
-                transform.position,
-                cameraRadius,
-                movement.normalized,
-                out RaycastHit movementHit,
-                movementDistance,
-                collisionLayers,
-                QueryTriggerInteraction.Ignore))
-        {
-            targetPosition =
-                transform.position +
-                movement.normalized *
-                Mathf.Max(
-                    0f,
-                    movementHit.distance - wallOffset
-                );
-
-            ResetSmoothing();
-        }
-
-        if (!Physics.CheckSphere(
-            targetPosition,
-            cameraRadius,
-            collisionLayers,
-            QueryTriggerInteraction.Ignore))
-        {
-            transform.position = targetPosition;
-        }
-        else
-        {
-            ResetSmoothing();
-        }
-
-        // Smooth camera rotation.
-        transform.rotation = Quaternion.Slerp(
-            transform.rotation,
-            desiredRotation,
-            Mathf.Clamp01(
-                flipRotationSpeed * Time.deltaTime
+        // One consistent smoothing velocity avoids
+        // competing SmoothDamp calculations.
+        Vector3 nextPosition = new Vector3(
+            Mathf.SmoothDamp(
+                smoothedPosition.x,
+                desiredPosition.x,
+                ref positionVelocity.x,
+                followTime
+            ),
+            Mathf.SmoothDamp(
+                smoothedPosition.y,
+                desiredPosition.y,
+                ref positionVelocity.y,
+                verticalTime
+            ),
+            Mathf.SmoothDamp(
+                smoothedPosition.z,
+                desiredPosition.z,
+                ref positionVelocity.z,
+                followTime
             )
         );
 
-        // Field of view.
+        // Never allow NaN into the Transform.
+        if (!IsFinite(nextPosition) ||
+            !IsFinite(positionVelocity))
+        {
+            smoothedPosition = desiredPosition;
+            positionVelocity = Vector3.zero;
+            nextPosition = desiredPosition;
+        }
+
+        smoothedPosition = nextPosition;
+
+        Vector3 safePosition = GetSafeCameraPosition(
+            pivotPosition,
+            nextPosition
+        );
+
+        if (!IsFinite(safePosition))
+        {
+            SnapToTarget(
+                pivotPosition,
+                desiredPosition,
+                desiredRotation
+            );
+
+            UpdateFOV(frontOrBackFlip);
+            return;
+        }
+
+        transform.position = safePosition;
+
+        // Normal mouse aiming has no rotation smoothing.
+        // Flip transitions remain smooth through flipBlend.
+        transform.rotation = desiredRotation;
+
+        lastValidCameraPosition = safePosition;
+        lastValidCameraRotation = desiredRotation;
+
+        UpdateFOV(frontOrBackFlip);
+    }
+
+    private Vector3 GetSafeCameraPosition(
+        Vector3 origin,
+        Vector3 desiredPosition
+    )
+    {
+        if (!IsFinite(origin) ||
+            !IsFinite(desiredPosition))
+        {
+            return lastValidCameraPosition;
+        }
+
+        if (!enableCameraCollision)
+            return desiredPosition;
+
+        Vector3 direction = desiredPosition - origin;
+
+        float distance = direction.magnitude;
+
+        if (!IsFinite(distance) || distance < 0.001f)
+            return desiredPosition;
+
+        direction /= distance;
+
+        float radius = Mathf.Max(0.01f, cameraRadius);
+
+        if (Physics.SphereCast(
+            origin,
+            radius,
+            direction,
+            out RaycastHit hit,
+            distance,
+            collisionLayers,
+            QueryTriggerInteraction.Ignore))
+        {
+            float safeDistance = Mathf.Max(
+                0f,
+                hit.distance - Mathf.Max(0f, wallOffset)
+            );
+
+            if (IsFinite(safeDistance))
+                return origin + direction * safeDistance;
+        }
+
+        return desiredPosition;
+    }
+
+    private void SnapToTarget(
+        Vector3 origin,
+        Vector3 desiredPosition,
+        Quaternion desiredRotation
+    )
+    {
+        positionVelocity = Vector3.zero;
+        smoothedPosition = desiredPosition;
+
+        Vector3 safePosition = GetSafeCameraPosition(
+            origin,
+            desiredPosition
+        );
+
+        if (!IsFinite(safePosition))
+            safePosition = lastValidCameraPosition;
+
+        if (IsFinite(safePosition))
+        {
+            transform.position = safePosition;
+            lastValidCameraPosition = safePosition;
+        }
+
+        if (IsFinite(desiredRotation))
+        {
+            transform.rotation = desiredRotation;
+            lastValidCameraRotation = desiredRotation;
+        }
+    }
+
+    private void RecoverFromInvalidTarget()
+    {
+        positionVelocity = Vector3.zero;
+        flipBlendVelocity = 0f;
+        flipBlend = 0f;
+
+        if (IsFinite(lastValidCameraPosition))
+            transform.position = lastValidCameraPosition;
+
+        if (IsFinite(lastValidCameraRotation))
+            transform.rotation = lastValidCameraRotation;
+
+        if (!warnedInvalidTarget)
+        {
+            Debug.LogWarning(
+                "CameraFollow: Invalid camera target detected. " +
+                "Camera held at its last valid position. " +
+                "Check Player, CameraPivot, and camera settings."
+            );
+
+            warnedInvalidTarget = true;
+        }
+    }
+
+    private void UpdateFOV(bool frontOrBackFlip)
+    {
+        if (playerCamera == null)
+            return;
+
+        Vector3 velocity = playerRb.linearVelocity;
+
+        bool validVelocity = IsFinite(velocity);
+
+        bool isDashing = false;
+        bool isJumping = false;
+
+        if (validVelocity)
+        {
+            Vector3 horizontal = velocity;
+            horizontal.y = 0f;
+
+            isDashing =
+                horizontal.magnitude > dashThreshold;
+
+            isJumping =
+                velocity.y > jumpThreshold;
+        }
+
         float targetFOV = normalFOV;
 
         if (isDashing)
-        {
             targetFOV = dashFOV;
-        }
         else if (isJumping || frontOrBackFlip)
-        {
             targetFOV = jumpFOV;
-        }
+
+        if (!IsFinite(playerCamera.fieldOfView))
+            playerCamera.fieldOfView = normalFOV;
 
         playerCamera.fieldOfView = Mathf.Lerp(
             playerCamera.fieldOfView,
             targetFOV,
-            Mathf.Clamp01(fovSpeed * Time.deltaTime)
+            Mathf.Clamp01(
+                Mathf.Max(0f, fovSpeed) * Time.deltaTime
+            )
         );
-    }
-
-    private void ResetSmoothing()
-    {
-        horizontalVelocityX = 0f;
-        horizontalVelocityZ = 0f;
-        verticalVelocity = 0f;
-        cameraVelocity = Vector3.zero;
     }
 }

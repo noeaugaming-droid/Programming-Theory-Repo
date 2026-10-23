@@ -1,27 +1,25 @@
 
 using UnityEngine;
 
+[DefaultExecutionOrder(10)]
 public class CameraLook : MonoBehaviour
 {
-    [Header("Mouse Settings")]
+    [Header("Mouse Look")]
     [SerializeField] private float mouseSensitivity = 2f;
-    [SerializeField] private float minRotation = -60f;
-    [SerializeField] private float maxRotation = 60f;
 
-    private float verticalRotation;
+    [SerializeField] private float minPitch = -60f;
+    [SerializeField] private float maxPitch = 60f;
 
-    private void Start()
+    private float pitch;
+
+    private void Awake()
     {
-        float startingX = transform.localEulerAngles.x;
-
-        if (startingX > 180f)
-            startingX -= 360f;
-
-        verticalRotation = Mathf.Clamp(
-            startingX,
-            minRotation,
-            maxRotation
+        pitch = Mathf.DeltaAngle(
+            0f,
+            transform.localEulerAngles.x
         );
+
+        pitch = Mathf.Clamp(pitch, minPitch, maxPitch);
     }
 
     private void Update()
@@ -29,20 +27,19 @@ public class CameraLook : MonoBehaviour
         if (Cursor.lockState != CursorLockMode.Locked)
             return;
 
-        float mouseY = Input.GetAxis("Mouse Y");
+        // Raw input: no additional mouse-axis filtering.
+        float mouseY =
+            Input.GetAxisRaw("Mouse Y") * mouseSensitivity;
 
-        verticalRotation -= mouseY * mouseSensitivity;
+        pitch -= mouseY;
 
-        verticalRotation = Mathf.Clamp(
-            verticalRotation,
-            minRotation,
-            maxRotation
+        pitch = Mathf.Clamp(
+            pitch,
+            minPitch,
+            maxPitch
         );
 
-        transform.localRotation = Quaternion.Euler(
-            verticalRotation,
-            0f,
-            0f
-        );
+        transform.localRotation =
+            Quaternion.Euler(pitch, 0f, 0f);
     }
 }

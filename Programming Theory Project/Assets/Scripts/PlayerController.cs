@@ -1,6 +1,7 @@
 
 using UnityEngine;
 
+[RequireComponent(typeof(Rigidbody))]
 public class PlayerController : MonoBehaviour
 {
     public enum TrickType
@@ -33,7 +34,6 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private Transform visualModel;
 
     [Header("Double Tap")]
-    [Tooltip("Maximum seconds between Space presses.")]
     [Range(0.1f, 0.8f)]
     [SerializeField] private float doubleTapWindow = 0.3f;
 
@@ -52,6 +52,8 @@ public class PlayerController : MonoBehaviour
     [Range(0.05f, 0.5f)]
     [SerializeField] private float apexWindow = 0.18f;
 
+    private Rigidbody playerRb;
+
     private float horIn;
     private float vertIn;
 
@@ -63,20 +65,24 @@ public class PlayerController : MonoBehaviour
 
     private float dashTimer;
     private float cooldownTimer;
+
     private float lastJumpTime = -100f;
     private float flipTimer;
     private float flipAngle;
 
+    private float pendingMouseYaw;
+
     private Vector3 dashDirection;
     private Vector3 flipDirection;
 
-    private Rigidbody playerRb;
     private Quaternion originalVisualRotation;
 
     private TrickType currentTrick = TrickType.None;
 
     public bool IsFlipping => isFlipping;
+
     public TrickType CurrentTrick => currentTrick;
+
     public float FlipAngle => flipAngle;
 
     public float FlipProgress =>
@@ -89,39 +95,55 @@ public class PlayerController : MonoBehaviour
     private void Awake()
     {
         playerRb = GetComponent<Rigidbody>();
+
         playerRb.useGravity = false;
+
+        // Prevent collisions from rotating the Rigidbody.
+        // Script-controlled MoveRotation still handles yaw.
+        playerRb.constraints |=
+            RigidbodyConstraints.FreezeRotation;
+
+        playerRb.angularVelocity = Vector3.zero;
+
+        // Smooth physics-driven player movement.
+        playerRb.interpolation =
+            RigidbodyInterpolation.Interpolate;
 
         if (visualModel != null)
         {
-            originalVisualRotation = visualModel.localRotation;
+            originalVisualRotation =
+                visualModel.localRotation;
         }
         else
         {
             Debug.LogWarning(
-                "PlayerController: Assign Visual Model to see flips."
+                "PlayerController: Assign Visual Model."
             );
         }
     }
 
     private void Update()
     {
+        UpdateFlipVisual();
+
         if (Cursor.lockState != CursorLockMode.Locked)
         {
             horIn = 0f;
             vertIn = 0f;
+            pendingMouseYaw = 0f;
             return;
         }
 
-        horIn = Input.GetAxis("Horizontal");
-        vertIn = Input.GetAxis("Vertical");
+        horIn = Input.GetAxisRaw("Horizontal");
+        vertIn = Input.GetAxisRaw("Vertical");
 
+        // Read mouse input every rendered frame.
+        // Apply rotation during physics updates.
         float mouseX =
-            Input.GetAxis("Mouse X") * mouseSensitivity;
+            Input.GetAxisRaw("Mouse X") *
+            mouseSensitivity;
 
-        playerRb.MoveRotation(
-            playerRb.rotation *
-            Quaternion.Euler(0f, mouseX, 0f)
-        );
+        pendingMouseYaw += mouseX;
 
         if (Input.GetKeyDown(KeyCode.Space))
         {
@@ -132,8 +154,6 @@ public class PlayerController : MonoBehaviour
         {
             dashKeyPressed = true;
         }
-
-        UpdateFlipVisual();
     }
 
     private void HandleSpacePress()
@@ -167,6 +187,7 @@ public class PlayerController : MonoBehaviour
     private void StartFlip()
     {
         isFlipping = true;
+
         flipTimer = 0f;
         flipAngle = 0f;
 
@@ -174,27 +195,36 @@ public class PlayerController : MonoBehaviour
         dashKeyPressed = false;
         jumpKeyPressed = false;
 
+        // Ensure collisions cannot introduce spin.
+        playerRb.angularVelocity = Vector3.zero;
+
         if (Mathf.Abs(horIn) > Mathf.Abs(vertIn))
         {
             if (horIn < 0f)
             {
-                currentTrick = TrickType.CartwheelLeft;
+                currentTrick =
+                    TrickType.CartwheelLeft;
+
                 flipDirection = -transform.right;
             }
             else
             {
-                currentTrick = TrickType.CartwheelRight;
+                currentTrick =
+                    TrickType.CartwheelRight;
+
                 flipDirection = transform.right;
             }
         }
         else if (vertIn < -0.1f)
         {
             currentTrick = TrickType.BackFlip;
+
             flipDirection = -transform.forward;
         }
         else
         {
             currentTrick = TrickType.FrontFlip;
+
             flipDirection = transform.forward;
         }
 
@@ -213,17 +243,20 @@ public class PlayerController : MonoBehaviour
         flipTimer += Time.deltaTime;
 
         float progress = Mathf.Clamp01(
-            flipTimer / Mathf.Max(0.01f, flipDuration)
+            flipTimer /
+            Mathf.Max(0.01f, flipDuration)
         );
 
         float easedProgress =
-            progress * progress * (3f - 2f * progress);
+            progress * progress *
+            (3f - 2f * progress);
 
         flipAngle = easedProgress * 360f;
 
         if (visualModel != null)
         {
             Vector3 axis = Vector3.right;
+
             float signedAngle = flipAngle;
 
             switch (currentTrick)
@@ -266,7 +299,9 @@ public class PlayerController : MonoBehaviour
     private void FinishFlip()
     {
         isFlipping = false;
+
         currentTrick = TrickType.None;
+
         flipAngle = 0f;
 
         if (visualModel != null)
@@ -274,11 +309,30 @@ public class PlayerController : MonoBehaviour
             visualModel.localRotation =
                 originalVisualRotation;
         }
+
+        playerRb.angularVelocity = Vector3.zero;
     }
 
     private void FixedUpdate()
     {
+        // Keep collision forces from accumulating spin.
+        playerRb.angularVelocity = Vector3.zero;
+
+        // Rotate only through Rigidbody physics.
+        float yaw = pendingMouseYaw;
+        pendingMouseYaw = 0f;
+
+        if (Mathf.Abs(yaw) > 0.00001f)
+        {
+            Quaternion targetRotation =
+                playerRb.rotation *
+                Quaternion.Euler(0f, yaw, 0f);
+
+            playerRb.MoveRotation(targetRotation);
+        }
+
         bool groundedLastStep = isGrounded;
+
         isGrounded = false;
 
         if (cooldownTimer > 0f)
@@ -307,12 +361,14 @@ public class PlayerController : MonoBehaviour
             cooldownTimer <= 0f)
         {
             isDashing = true;
+
             dashTimer = dashDuration;
+
             cooldownTimer = dashCooldown;
 
             dashDirection = direction;
 
-            if (dashDirection.sqrMagnitude == 0f)
+            if (dashDirection.sqrMagnitude < 0.001f)
             {
                 dashDirection = transform.forward;
             }
@@ -360,6 +416,10 @@ public class PlayerController : MonoBehaviour
 
     private void HandleFlipPhysics()
     {
+        // Flip rotation is visual only.
+        // The Rigidbody stays upright.
+        playerRb.angularVelocity = Vector3.zero;
+
         Vector3 velocity = playerRb.linearVelocity;
 
         velocity.x =
@@ -385,6 +445,12 @@ public class PlayerController : MonoBehaviour
 
     private void OnCollisionStay(Collision collision)
     {
+        // Do not allow collision-induced rotation.
+        if (playerRb != null)
+        {
+            playerRb.angularVelocity = Vector3.zero;
+        }
+
         foreach (ContactPoint contact in collision.contacts)
         {
             if (contact.normal.y > 0.5f)
@@ -403,10 +469,19 @@ public class PlayerController : MonoBehaviour
                 originalVisualRotation;
         }
 
+        if (playerRb != null)
+        {
+            playerRb.angularVelocity = Vector3.zero;
+        }
+
         isFlipping = false;
+        isDashing = false;
+
         currentTrick = TrickType.None;
 
         jumpKeyPressed = false;
         dashKeyPressed = false;
+
+        pendingMouseYaw = 0f;
     }
 }
