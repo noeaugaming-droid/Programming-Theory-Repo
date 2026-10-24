@@ -1,0 +1,11 @@
+Ready to patch: Assets/Scripts/EnemySurfaceCrawler.cs
+
+Changes:
+- Prefer actual support contact over speculative wall contact
+- Reject wall transitions when contact geometry is too far away
+- Recheck jump landing at completion; fall if landing is invalid
+- Correct initial attachment position bookkeeping
+
+This does not add global pathfinding or guarantee corner climbing.
+
+Backup: C:\Users\ckeah\Desktop\PC_Desktop\Art_Development\ArtDev_Unity\Unity_ProgrammingTheoryRepo\Programming Theory Project\TheyBeBugginFixBackups\20261024_001931_AirbornePatch\EnemySurfaceCrawler.cs

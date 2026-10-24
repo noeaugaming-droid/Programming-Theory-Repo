@@ -1,0 +1,7 @@
+TARGET: Assets/Scripts/EnemySurfaceCrawler.cs
+PATCH: Sensor steering
+PATCH: Wall attachment clearance
+PATCH: Unsupported direction guard
+All anchors matched. No files have been changed yet.
+
+Backup: C:\Users\ckeah\Desktop\PC_Desktop\Art_Development\ArtDev_Unity\Unity_ProgrammingTheoryRepo\Programming Theory Project\TheyBeBugginFixBackups\20261024_000125_CodePatch\EnemySurfaceCrawler.cs

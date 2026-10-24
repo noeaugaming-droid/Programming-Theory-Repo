@@ -1,0 +1,10 @@
+FIX RESULTS
+Items flagged: 4
+Assets modified: 2
+
+Backup directory: C:\Users\ckeah\Desktop\PC_Desktop\Art_Development\ArtDev_Unity\Unity_ProgrammingTheoryRepo\Programming Theory Project\TheyBeBugginFixBackups\20261023_234841
+RIGIDBODY Assets/Prefabs/Beetle.prefab :: Beetle — set isKinematic=true, useGravity=false
+SURFACE GAP Assets/Prefabs/Beetle.prefab :: Beetle — 3.93 -> 1.50 (test collider clearance after applying)
+RIGIDBODY Assets/Prefabs/SpiderParent.prefab :: SpiderParent — set isKinematic=true, useGravity=false
+
+Not fixed automatically: crawler geometry algorithms, collision tunneling, runtime race conditions, missing terrain connections, broken game logic, and unknown code defects.

@@ -5481,7 +5481,7 @@ GameObject:
   m_TagString: Ground
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 2147483647
   m_IsActive: 1
 --- !u!4 &1118337978
 Transform:
@@ -6681,27 +6681,27 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 274cb648c236c2c41ae19797e7305d2a, type: 3}
       propertyPath: m_LocalScale.x
-      value: 7.0215516
+      value: 13.367873
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 274cb648c236c2c41ae19797e7305d2a, type: 3}
       propertyPath: m_LocalScale.y
-      value: 79.00552
+      value: 138.36783
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 274cb648c236c2c41ae19797e7305d2a, type: 3}
       propertyPath: m_LocalScale.z
-      value: 7.613608
+      value: 40.655907
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 274cb648c236c2c41ae19797e7305d2a, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -14.632016
+      value: -14.129
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 274cb648c236c2c41ae19797e7305d2a, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 3.1
+      value: -21.2
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 274cb648c236c2c41ae19797e7305d2a, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 12.0236845
+      value: 11.418
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 274cb648c236c2c41ae19797e7305d2a, type: 3}
       propertyPath: m_LocalRotation.w
@@ -9573,18 +9573,17 @@ MonoBehaviour:
   spiderPrefab: {fileID: 3445917376494882868, guid: 36c9b79ac240ca043be41c8d9b02bb2c, type: 3}
   beetlePrefab: {fileID: 7173742020872733848, guid: 63d73f94096b38048b9715bbae36ac01, type: 3}
   spawnRange: 100
+  minimumSpawnRange: 25
   enemyCount: 15
-  waveDelay: 2
+  minimumEnemySpacing: 7
+  attemptsPerEnemy: 40
   spawnSurfaceLayers:
     serializedVersion: 2
     m_Bits: 4294967295
-  obstructionLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  attemptsPerEnemy: 40
-  surfaceClearance: 0.08
-  overlapTolerance: 0.001
-  logFailedSpawns: 1
+  rayStartHeight: 100
+  rayLength: 250
+  spawnSurfaceOffset: 0.7
+  minimumUpNormal: 0.45
 --- !u!114 &2138620847
 MonoBehaviour:
   m_ObjectHideFlags: 0

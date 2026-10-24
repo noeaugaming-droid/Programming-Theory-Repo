@@ -1,0 +1,8 @@
+Target: C:/Users/ckeah/Desktop/PC_Desktop/Art_Development/ArtDev_Unity/Unity_ProgrammingTheoryRepo/Programming Theory Project/Assets\Scripts\EnemySurfaceCrawler.cs
+Original SHA256: A520037ADCD0EDAE
+Replacement SHA256: B9C833529E5DD508
+
+Full crawler replacement; retains serialized field names and public API.
+Adds collider-aware placement, collision-safe movement, penetration recovery,
+short-range wall reattachment and stricter wall contact checks.
+Spider jumps remain capped at 15 units; beetles cannot initiate jumps.

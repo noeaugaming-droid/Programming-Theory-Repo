@@ -1,4 +1,6 @@
+// TBB_NAV_PATCH_20261023_V1
 
+// TBB_AIRBORNE_CONTACT_PATCH_V2
 using UnityEngine;
 
 /// <summary>
@@ -138,6 +140,11 @@ public class EnemySurfaceCrawler : MonoBehaviour
     private bool jumping;
 
     private readonly Collider[] neighbors = new Collider[32];
+    private readonly Collider[] collisionCandidates = new Collider[96];
+    private Vector3 lastAttachedNormal = Vector3.up;
+    private float airborneTime;
+    private const float CollisionSkin = 0.035f;
+    private const float MaximumStep = 0.16f;
 
     #endregion
 
@@ -174,6 +181,7 @@ public class EnemySurfaceCrawler : MonoBehaviour
             RigidbodyInterpolation.Interpolate;
 
         surfaceNormal = transform.up;
+        lastAttachedNormal = surfaceNormal;
 
         lastPosition = rb.position;
 
@@ -255,7 +263,7 @@ public class EnemySurfaceCrawler : MonoBehaviour
 
             AttachToSurface(initialHit);
 
-            position = rb.position;
+            position = SurfaceTarget(initialHit);
         }
 
         // Choose an individual movement direction.
@@ -296,9 +304,7 @@ public class EnemySurfaceCrawler : MonoBehaviour
             Mathf.Clamp01(surfaceNormalSpeed * dt)
         ).normalized;
 
-        Vector3 snapped =
-            currentHit.point +
-            currentHit.normal * surfaceOffset;
+        Vector3 snapped = SurfaceTarget(currentHit);
 
         position = Vector3.Lerp(
             position,
@@ -308,6 +314,7 @@ public class EnemySurfaceCrawler : MonoBehaviour
 
         fallSpeed = 0f;
         hasSurface = true;
+        lastAttachedNormal = surfaceNormal;
 
         // Apply normal crawling movement.
         if (movement.sqrMagnitude > 0.0001f &&
@@ -328,9 +335,7 @@ public class EnemySurfaceCrawler : MonoBehaviour
                 travel,
                 out RaycastHit nextHit))
             {
-                Vector3 target =
-                    nextHit.point +
-                    nextHit.normal * surfaceOffset;
+                Vector3 target = SurfaceTarget(nextHit);
 
                 position = Vector3.Lerp(
                     proposed,
@@ -373,7 +378,7 @@ public class EnemySurfaceCrawler : MonoBehaviour
             RotateToward(targetRotation, dt);
         }
 
-        rb.MovePosition(position);
+        MoveSafely(position);
     }
 
     #endregion
@@ -444,7 +449,7 @@ public class EnemySurfaceCrawler : MonoBehaviour
         }
 
         Vector3 destination =
-            landingPoint + normal * surfaceOffset;
+            landingPoint + normal * BodyClearance(normal);
 
         // Never jump farther than 15 Unity units.
         if (Vector3.Distance(
@@ -495,8 +500,7 @@ public class EnemySurfaceCrawler : MonoBehaviour
         jumpStart = rb.position;
 
         jumpTarget =
-            landingHit.point +
-            landingHit.normal * surfaceOffset;
+            SurfaceTarget(landingHit);
 
         jumpLandingNormal = landingHit.normal;
 
@@ -671,19 +675,21 @@ public class EnemySurfaceCrawler : MonoBehaviour
             }
         }
 
-        // NEW: Let the raycast sensor refine
-        // the chosen movement direction.
-        //
-        // Each enemy's sensor has its own
-        // steering preferences and route memory.
+        // TBB: Use one steering authority. The sensor chooses among
+        // nearby directions; the crawler alone moves the Rigidbody.
         if (navigationSensor != null && hasSurface)
         {
-            best =
-                navigationSensor.GetNavigationDirection(
-                    best
-                );
+            Vector3 sensed = navigationSensor.GetNavigationDirection(toward + avoidance * 0.65f);
+            if (sensed.sqrMagnitude > 0.0001f) best = sensed.normalized;
         }
 
+        // Never request normal crawling movement toward empty space.
+        // Spiders may still cross gaps using their separate jump method.
+        if (!TryFindConnectedSurface(position + best.normalized *
+            Mathf.Min(edgeTurnSearchDistance, 0.5f), best, out _))
+        {
+            return Vector3.zero;
+        }
         return best.normalized;
     }
 
@@ -748,117 +754,161 @@ public class EnemySurfaceCrawler : MonoBehaviour
     /// <summary>
     /// Attempts to find ground beneath an airborne enemy.
     /// </summary>
-    private bool TryAcquireSurface(
-        Vector3 position,
-        out RaycastHit hit)
-    {
-        return TrySurfaceRay(
-            position + Vector3.up * 0.1f,
-            Vector3.down,
-            Mathf.Max(0.2f, maximumRecoveryDistance),
-            out hit
-        ) &&
-        Vector3.Dot(
-            hit.normal,
-            Vector3.up
-        ) > 0.35f;
-    }
-
-
-    /// <summary>
-    /// Finds a nearby connected surface.
-    /// Does not intentionally attach to distant geometry.
-    /// </summary>
-    private bool TryFindConnectedSurface(
-        Vector3 position,
-        Vector3 travel,
-        out RaycastHit hit)
+    private bool TryAcquireSurface(Vector3 position, out RaycastHit hit)
     {
         hit = default;
-
-        if (climbableLayers.value == 0)
+        float best = float.PositiveInfinity;
+        bool found = false;
+        // Look for the previous wall/ceiling as well as ground. No long-range
+        // teleporting: recovery is limited to a short local contact search.
+        Vector3[] dirs = { -lastAttachedNormal, Vector3.down,
+            Vector3.right, Vector3.left, Vector3.forward, Vector3.back, Vector3.up };
+        for (int i = 0; i < dirs.Length; i++)
         {
-            return false;
+            if (!TrySurfaceRay(position - dirs[i] * 0.05f, dirs[i],
+                Mathf.Min(maximumRecoveryDistance, 1.8f), out RaycastHit candidate)) continue;
+            Vector3 target = SurfaceTarget(candidate);
+            float distance = Vector3.Distance(position, target);
+            // Reject distant walls and invalid body positions.
+            if (distance > Mathf.Max(0.45f, maximumSurfaceGap + 0.25f) ||
+                IsPenetrating(target, rb.rotation)) continue;
+            float score = distance + (Vector3.Dot(candidate.normal, lastAttachedNormal) < 0.3f ? 0.25f : 0f);
+            if (score >= best) continue;
+            best = score;
+            hit = candidate;
+            found = true;
         }
+        return found;
+    }
 
-        // Check for a wall directly ahead.
-        if (travel.sqrMagnitude > 0.001f &&
-            TrySurfaceRay(
-                position + surfaceNormal * 0.1f,
-                travel,
-                wallDetectionDistance,
-                out RaycastHit wall) &&
-            Vector3.Dot(
-                wall.normal,
-                surfaceNormal
-            ) < 0.65f &&
-            wall.distance <= maximumSurfaceGap)
+    private bool TryFindConnectedSurface(Vector3 position, Vector3 travel, out RaycastHit hit)
+    {
+        hit = default;
+        Vector3 normal = surfaceNormal.sqrMagnitude > 0.01f ? surfaceNormal.normalized : Vector3.up;
+        float probe = Mathf.Max(surfaceProbeDistance, BodyClearance(normal) + 0.35f);
+        if (TrySurfaceRay(position + normal * 0.15f, -normal,
+            probe + 0.2f, out RaycastHit support))
         {
-            hit = wall;
-            return true;
-        }
-
-        // Check the current surface.
-        Vector3 origin =
-            position +
-            surfaceNormal * surfaceProbeDistance;
-
-        if (TrySurfaceRay(
-            origin,
-            -surfaceNormal,
-            surfaceProbeDistance +
-            surfaceOffset +
-            maximumSurfaceGap,
-            out RaycastHit current) &&
-            Vector3.Distance(
-                position,
-                current.point +
-                current.normal * surfaceOffset
-            ) <= maximumSurfaceGap + 0.15f)
-        {
-            hit = current;
-            return true;
-        }
-
-        // Look for a connected wall around an edge.
-        if (travel.sqrMagnitude > 0.001f)
-        {
-            Vector3 ahead =
-                position +
-                travel.normalized * edgeProbeDistance;
-
-            Vector3 cornerOrigin =
-                ahead -
-                surfaceNormal * (surfaceOffset + 0.15f);
-
-            if (TrySurfaceRay(
-                cornerOrigin,
-                -travel.normalized,
-                edgeProbeDistance + maximumSurfaceGap,
-                out RaycastHit edgeWall) &&
-                Vector3.Distance(
-                    position,
-                    edgeWall.point +
-                    edgeWall.normal * surfaceOffset
-                ) <= edgeProbeDistance + maximumSurfaceGap &&
-                Vector3.Dot(
-                    edgeWall.normal,
-                    surfaceNormal
-                ) < 0.7f)
+            Vector3 target = SurfaceTarget(support);
+            if (Vector3.Distance(position, target) <= Mathf.Max(0.45f, maximumSurfaceGap + 0.15f)
+                && !IsPenetrating(target, rb.rotation))
             {
-                hit = edgeWall;
+                hit = support;
+                // On the floor, an actual close wall contact in the travel
+                // direction can start a corner transition. A remote wall cannot.
+                if (travel.sqrMagnitude > 0.001f &&
+                    TrySurfaceRay(position, travel.normalized,
+                        Mathf.Max(wallDetectionDistance, BodyClearance(travel) + 0.2f),
+                        out RaycastHit wall) &&
+                    Vector3.Dot(wall.normal, normal) < 0.45f &&
+                    Vector3.Dot(wall.normal, travel.normalized) < -0.35f)
+                {
+                    Vector3 wallTarget = SurfaceTarget(wall);
+                    if (Vector3.Distance(position, wallTarget) < BodyClearance(normal) + 0.45f &&
+                        !IsPenetrating(wallTarget, rb.rotation))
+                    {
+                        // Switch only near the intersection; do not treat a
+                        // wall several units away as current support.
+                        hit = wall;
+                    }
+                }
                 return true;
             }
         }
-
+        // If the old support ends, allow a very close wall/ceiling corner.
+        if (travel.sqrMagnitude > 0.001f &&
+            TrySurfaceRay(position, travel.normalized,
+                Mathf.Max(0.3f, wallDetectionDistance), out RaycastHit corner))
+        {
+            Vector3 target = SurfaceTarget(corner);
+            if (Vector3.Distance(position, target) <= Mathf.Max(0.45f, maximumSurfaceGap + 0.15f) &&
+                !IsPenetrating(target, rb.rotation))
+            {
+                hit = corner;
+                return true;
+            }
+        }
         return false;
     }
 
+    private float BodyClearance(Vector3 normal)
+    {
+        // Bounds are conservative and account for the actual collider size.
+        Bounds bounds = bodyCollider.bounds;
+        Vector3 n = normal.normalized;
+        return Mathf.Max(surfaceOffset,
+            Mathf.Abs(n.x) * bounds.extents.x +
+            Mathf.Abs(n.y) * bounds.extents.y +
+            Mathf.Abs(n.z) * bounds.extents.z + CollisionSkin);
+    }
 
-    /// <summary>
-    /// Casts a ray against climbable layers.
-    /// Ignores the enemy's own colliders.
-    /// </summary>
+    private Vector3 SurfaceTarget(RaycastHit hit)
+    {
+        return hit.point + hit.normal * BodyClearance(hit.normal);
+    }
+
+    private bool IsPenetrating(Vector3 candidate, Quaternion rotation)
+    {
+        // ComputePenetration uses actual collider shapes, unlike a tiny sphere ray.
+        Vector3 shift = candidate - transform.position;
+        Bounds bounds = bodyCollider.bounds;
+        int count = Physics.OverlapSphereNonAlloc(bounds.center + shift,
+            bounds.extents.magnitude + 0.1f, collisionCandidates, ~0,
+            QueryTriggerInteraction.Ignore);
+        for (int i = 0; i < count; i++)
+        {
+            Collider other = collisionCandidates[i];
+            if (other == null || IsOwnCollider(other) || !other.enabled) continue;
+            if (other.GetComponentInParent<Enemy>() != null) continue;
+            if (Physics.ComputePenetration(bodyCollider, candidate, rotation,
+                other, other.transform.position, other.transform.rotation,
+                out _, out float depth) && depth > CollisionSkin)
+                return true;
+        }
+        return false;
+    }
+
+    private Vector3 ResolvePenetration(Vector3 position)
+    {
+        for (int pass = 0; pass < 5; pass++)
+        {
+            bool changed = false;
+            Vector3 shift = position - transform.position;
+            Bounds bounds = bodyCollider.bounds;
+            int count = Physics.OverlapSphereNonAlloc(bounds.center + shift,
+                bounds.extents.magnitude + 0.15f, collisionCandidates, ~0,
+                QueryTriggerInteraction.Ignore);
+            for (int i = 0; i < count; i++)
+            {
+                Collider other = collisionCandidates[i];
+                if (other == null || IsOwnCollider(other) || !other.enabled) continue;
+                if (other.GetComponentInParent<Enemy>() != null) continue;
+                if (!Physics.ComputePenetration(bodyCollider, position, rb.rotation,
+                    other, other.transform.position, other.transform.rotation,
+                    out Vector3 direction, out float depth) || depth <= 0.001f) continue;
+                position += direction * (depth + CollisionSkin);
+                changed = true;
+            }
+            if (!changed) break;
+        }
+        return position;
+    }
+
+    private void MoveSafely(Vector3 destination)
+    {
+        Vector3 start = ResolvePenetration(rb.position);
+        Vector3 delta = destination - start;
+        int steps = Mathf.Clamp(Mathf.CeilToInt(delta.magnitude / MaximumStep), 1, 128);
+        Vector3 current = start;
+        for (int i = 1; i <= steps; i++)
+        {
+            Vector3 next = start + delta * (i / (float)steps);
+            if (IsPenetrating(next, rb.rotation)) break;
+            current = next;
+        }
+        rb.MovePosition(ResolvePenetration(current));
+    }
+
     private bool TrySurfaceRay(
         Vector3 origin,
         Vector3 direction,
@@ -940,10 +990,9 @@ public class EnemySurfaceCrawler : MonoBehaviour
 
         hasSurface = true;
 
-        rb.MovePosition(
-            hit.point +
-            hit.normal * surfaceOffset
-        );
+        lastAttachedNormal = surfaceNormal;
+        airborneTime = 0f;
+        MoveSafely(SurfaceTarget(hit));
     }
 
     #endregion
@@ -957,6 +1006,7 @@ public class EnemySurfaceCrawler : MonoBehaviour
     private void Fall(float dt)
     {
         hasSurface = false;
+        airborneTime += dt;
 
         fallSpeed +=
             Mathf.Max(0f, lostSurfaceGravity) * dt;
@@ -974,7 +1024,7 @@ public class EnemySurfaceCrawler : MonoBehaviour
             TrySurfaceRay(
                 start,
                 Vector3.down,
-                delta.magnitude + surfaceOffset,
+                delta.magnitude + BodyClearance(Vector3.up),
                 out RaycastHit landing) &&
             Vector3.Dot(
                 landing.normal,
@@ -985,7 +1035,7 @@ public class EnemySurfaceCrawler : MonoBehaviour
             return;
         }
 
-        rb.MovePosition(next);
+        MoveSafely(next);
     }
 
 
@@ -1060,67 +1110,42 @@ public class EnemySurfaceCrawler : MonoBehaviour
         if (climbableLayers.value == 0)
         {
             jumping = false;
-
+            hasSurface = false;
             Fall(dt);
             return;
         }
 
         jumpElapsed += dt;
-
-        float t =
-            Mathf.Min(jumpElapsed, jumpDuration);
-
-        float gravity =
-            Mathf.Max(1f, lostSurfaceGravity);
-
-        Vector3 position =
-            jumpStart +
-            jumpVelocity * t +
-            0.5f * Vector3.down *
-            gravity * t * t;
-
-        rb.MovePosition(position);
-
-        if (jumpElapsed < jumpDuration)
+        float t = Mathf.Min(jumpElapsed, jumpDuration);
+        float gravity = Mathf.Max(1f, lostSurfaceGravity);
+        Vector3 position = jumpStart + jumpVelocity * t
+            + 0.5f * Vector3.down * gravity * t * t;
+        MoveSafely(position);
+        if (Vector3.Distance(rb.position, position) > 0.4f && jumpElapsed > dt * 2f)
         {
+            jumping = false; hasSurface = false; fallSpeed = 0f; return;
+        }
+        if (jumpElapsed < jumpDuration) return;
+
+        jumping = false;
+        // Only attach if the original landing location still has a
+        // valid collider AND the contact is close to the intended point.
+        if (TrySurfaceRay(jumpTarget + jumpLandingNormal * surfaceProbeDistance,
+            -jumpLandingNormal,
+            surfaceProbeDistance + surfaceOffset + maximumSurfaceGap,
+            out RaycastHit landing) &&
+            Vector3.Distance(SurfaceTarget(landing),
+                jumpTarget) <= 0.5f)
+        {
+            AttachToSurface(landing);
             return;
         }
 
-        jumping = false;
-
-        // Confirm the intended landing still exists.
-        if (TrySurfaceRay(
-            jumpTarget +
-            jumpLandingNormal * surfaceProbeDistance,
-            -jumpLandingNormal,
-            surfaceProbeDistance +
-            surfaceOffset +
-            maximumSurfaceGap,
-            out RaycastHit landing) &&
-            Vector3.Distance(
-                landing.point +
-                landing.normal * surfaceOffset,
-                jumpTarget
-            ) < 1.25f)
-        {
-            AttachToSurface(landing);
-        }
-        else
-        {
-            hasSurface = false;
-
-            fallSpeed = Mathf.Max(
-                0f,
-                -jumpVelocity.y +
-                gravity * jumpDuration
-            );
-        }
+        // Failed jump: gravity-driven fall, never continued air crawling.
+        hasSurface = false;
+        fallSpeed = Mathf.Max(0f, gravity * jumpDuration - jumpVelocity.y);
     }
 
-
-    /// <summary>
-    /// Smoothly rotates the enemy toward a target rotation.
-    /// </summary>
     private void RotateToward(
         Quaternion target,
         float dt)
