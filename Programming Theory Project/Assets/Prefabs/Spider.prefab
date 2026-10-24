@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 2235847192191699247}
   - component: {fileID: 4027849386984286178}
   - component: {fileID: 7656826363584778772}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: SpiderChild
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -96,12 +96,12 @@ GameObject:
   m_Component:
   - component: {fileID: 6933566634247591723}
   - component: {fileID: 3191290885245124433}
-  - component: {fileID: 4770932660404812760}
   - component: {fileID: 6564925002194999495}
   - component: {fileID: 6397297124531296876}
   - component: {fileID: 3811744279937791408}
   - component: {fileID: 5470100214373949368}
-  m_Layer: 0
+  - component: {fileID: 4593946723945588452}
+  m_Layer: 7
   m_Name: Spider
   m_TagString: Enemy
   m_Icon: {fileID: 0}
@@ -148,30 +148,9 @@ Rigidbody:
   m_ImplicitTensor: 1
   m_UseGravity: 0
   m_IsKinematic: 1
-  m_Interpolate: 0
+  m_Interpolate: 1
   m_Constraints: 112
-  m_CollisionDetection: 0
---- !u!65 &4770932660404812760
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8256026944962493952}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 3, y: 1, z: 2}
-  m_Center: {x: 0, y: 0, z: 0}
+  m_CollisionDetection: 3
 --- !u!114 &6564925002194999495
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -189,7 +168,7 @@ MonoBehaviour:
     m_Bits: 265
   solidLayers:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 265
   skin: 0.035
   surfaceProbeDistance: 1.5
   wallProbeDistance: 1.1
@@ -198,6 +177,12 @@ MonoBehaviour:
   gravity: 18
   terminalSpeed: 35
   stuckSeconds: 1.5
+  seamProbeOffset: 0.3
+  seamHeightTolerance: 0.2
+  minimumFloorNormalY: 0.55
+  attachmentGraceTime: 0.15
+  surfaceNormalSmoothSpeed: 14
+  showDebugProbes: 0
 --- !u!114 &6397297124531296876
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -226,10 +211,10 @@ MonoBehaviour:
   blockedDirectionMemory: 2.5
   minimumMovementProgress: 0.35
   progressCheckInterval: 1
-  separationRadius: 1.75
+  separationRadius: 3.61
   enemyLayers:
     serializedVersion: 2
-    m_Bits: 256
+    m_Bits: 128
 --- !u!114 &3811744279937791408
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -267,3 +252,25 @@ MonoBehaviour:
   attackDelay: 2
   knockbackForce: 10
   knockbackDuration: 0.3
+--- !u!64 &4593946723945588452
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8256026944962493952}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 0}

@@ -340,7 +340,7 @@ Rigidbody:
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 265
+    m_Bits: 0
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -372,6 +372,7 @@ MonoBehaviour:
   attackCooldown: 2
   knockbackForce: 10
   knockbackDuration: 0.3
+  targetSearchInterval: 1
 --- !u!114 &8735315752466292506
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -467,7 +468,7 @@ MonoBehaviour:
   blockedDirectionMemory: 2.5
   minimumMovementProgress: 0.35
   progressCheckInterval: 1
-  separationRadius: 1.75
+  separationRadius: 3.5
   enemyLayers:
     serializedVersion: 2
     m_Bits: 128

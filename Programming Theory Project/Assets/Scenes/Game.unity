@@ -9556,11 +9556,16 @@ MonoBehaviour:
   attemptsPerEnemy: 40
   spawnSurfaceLayers:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 265
   rayStartHeight: 100
   rayLength: 250
-  spawnSurfaceOffset: 0.7
   minimumUpNormal: 0.45
+  obstructionLayers:
+    serializedVersion: 2
+    m_Bits: 265
+  spawnClearance: 0.12
+  minimumPlayerDistance: 12
+  logRejectedSpawns: 0
 --- !u!114 &2138620847
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9573,7 +9578,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a54623adb0720b243862eaf0f3c09744, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  baseFloor: {fileID: 0}
+  baseFloor: {fileID: 1118337982}
   spiderPrefab: {fileID: 8256026944962493952, guid: 306c5bc5ceed4654fa3046a2d7cbc8c2, type: 3}
   beetlePrefab: {fileID: 7173742020872733848, guid: 63d73f94096b38048b9715bbae36ac01, type: 3}
   waveText: {fileID: 1592840253}
@@ -9582,12 +9587,12 @@ MonoBehaviour:
   waveDelay: 2
   spawnSurfaceLayers:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 265
   obstructionLayers:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 265
   attemptsPerEnemy: 40
-  clearance: 0.07
+  clearance: 1.46
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
