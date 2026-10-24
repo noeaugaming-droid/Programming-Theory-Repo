@@ -273,6 +273,7 @@ GameObject:
   - component: {fileID: 6108238451363402182}
   - component: {fileID: 3930668188146708030}
   - component: {fileID: 5641668874554751005}
+  - component: {fileID: 8735315752466292506}
   m_Layer: 7
   m_Name: Beetle
   m_TagString: Enemy
@@ -365,8 +366,39 @@ MonoBehaviour:
   attackCooldown: 2
   chargeForce: 15
   chargeDuration: 0.3
+  minimumSpeed: 5
+  maximumSpeed: 8
+  preferredPlayerDistance: 4
+  strafeStrength: 0.6
+  zigzagStrength: 0.35
+  orbitStrength: 0.75
+  directionChangeInterval: 0.8
   knockbackForce: 10
   knockbackDuration: 0.3
+--- !u!114 &8735315752466292506
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7173742020872733848}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b26a888afad1c6e44bc34a9f1f9c2ccd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  climbableLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  surfaceOffset: 0.55
+  surfaceProbeDistance: 1.5
+  wallDetectionDistance: 1.2
+  edgeProbeDistance: 1.5
+  rotationSpeed: 12
+  surfaceSnapSpeed: 12
+  surfaceNormalSpeed: 10
+  lostSurfaceGravity: 15
+  maximumRecoveryDistance: 3
 --- !u!1 &8423681588415135491
 GameObject:
   m_ObjectHideFlags: 0
