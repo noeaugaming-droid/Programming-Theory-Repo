@@ -5,46 +5,30 @@ using UnityEngine;
 [RequireComponent(typeof(Camera))]
 public class CameraFollow : MonoBehaviour
 {
-    [Header("References")]
+    [Header("Target")]
     [SerializeField] private Transform cameraPivot;
-    [SerializeField] private PlayerController playerController;
-    [SerializeField] private CameraLook cameraLook;
 
-    [Header("Normal Third Person Camera")]
+    [Header("Camera Position")]
     [SerializeField]
     private Vector3 cameraOffset =
         new Vector3(7f, 5f, -5f);
 
-    [SerializeField] private float followSmoothTime = 0.08f;
-    [SerializeField] private float maximumFollowDistance = 15f;
+    [SerializeField] private float horizontalSmoothTime = 0.1f;
+    [SerializeField] private float verticalSmoothTime = 0.1f;
+    [SerializeField] private float dashSmoothTime = 0.18f;
 
-    [Header("Aim Tracking")]
-    [SerializeField] private bool rotateCameraTowardAimPoint = true;
-    [SerializeField] private float aimRotationSpeed = 18f;
+    [SerializeField] private float maxFollowDistance = 15f;
+    [SerializeField] private float teleportDetectionDistance = 8f;
 
-    [Header("Cartwheel Camera - Existing Behavior")]
-    [SerializeField] private bool rollWithCartwheel = true;
+    [Header("Movement Detection")]
+    [SerializeField] private float dashThreshold = 15f;
+    [SerializeField] private float jumpThreshold = 1f;
 
-    [Range(0f, 1f)]
-    [SerializeField] private float rollAmount = 1f;
-
-    [Header("First Person Somersault Camera")]
-    [SerializeField] private bool enableFirstPersonFlips = true;
-
-    [SerializeField]
-    private Vector3 eyeOffset =
-        new Vector3(0f, 1.65f, 0.12f);
-
-    [Tooltip("Optional visual-model head or eye anchor.")]
-    [SerializeField] private Transform headTransform;
-
-    [Range(0.01f, 0.45f)]
-    [SerializeField] private float enterFirstPersonAt = 0.18f;
-
-    [Range(0.55f, 0.99f)]
-    [SerializeField] private float exitFirstPersonAt = 0.82f;
-
-    [SerializeField] private float flipCameraPitchOffset = 0f;
+    [Header("Field Of View")]
+    [SerializeField] private float normalFOV = 90f;
+    [SerializeField] private float jumpFOV = 65f;
+    [SerializeField] private float dashFOV = 120f;
+    [SerializeField] private float fovSpeed = 6f;
 
     [Header("Camera Collision")]
     [SerializeField] private bool enableCameraCollision = true;
@@ -52,178 +36,127 @@ public class CameraFollow : MonoBehaviour
     [SerializeField] private float wallOffset = 0.1f;
     [SerializeField] private LayerMask collisionLayers = ~0;
 
-    [Header("Field Of View")]
-    [SerializeField] private float normalFOV = 90f;
-    [SerializeField] private float firstPersonFlipFOV = 100f;
-    [SerializeField] private float jumpFOV = 65f;
-    [SerializeField] private float dashFOV = 120f;
-    [SerializeField] private float dashThreshold = 15f;
-    [SerializeField] private float jumpThreshold = 1f;
-    [SerializeField] private float fovSpeed = 6f;
+    [Header("Front / Back Flip Camera")]
+    [SerializeField] private bool enableFlipTopView = true;
+    [SerializeField] private float flipTopHeight = 7f;
+    [SerializeField] private float flipTopBackDistance = 2.5f;
+    [SerializeField] private float flipLookDownDistance = 3f;
+    [SerializeField] private float flipTransitionInTime = 0.35f;
+    [SerializeField] private float flipTransitionOutTime = 0.35f;
+    [SerializeField] private float flipPositionSmoothTime = 0.08f;
+
+    [Header("Flip Mouse Aim")]
+    [Tooltip("When enabled, the mouse controls camera rotation during flips instead of locking the view onto the player.")]
+    [SerializeField] private bool freeAimDuringFlips = true;
 
     private Camera attachedCamera;
     private Rigidbody playerRb;
+    private PlayerController playerController;
+    private Transform playerTransform;
 
-    private Vector3 smoothedPivotPosition;
+    private Vector3 smoothedFollowPosition;
     private Vector3 followVelocity;
 
-    private Quaternion unrolledRotation;
-    private Vector3 unrolledCameraPosition;
+    private Vector3 previousPivotPosition;
+    private bool hasPreviousPivotPosition;
 
+    private Vector3 lastValidPosition;
+    private Quaternion lastValidRotation;
+
+    private float flipBlend;
+    private float flipBlendVelocity;
+
+    public float OverheadBlend => flipBlend;
+    public bool IsOverheadActive => flipBlend > 0.001f;
+
+    [Header("Overhead Look Orientation")]
+    [Tooltip("Downward base angle for overhead view. 90 means straight down before mouse pitch is added.")]
+    [SerializeField] private float overheadBasePitch = 90f;
+
+    private CameraLook cameraLook;
     private bool initialized;
-
-    public Camera AttachedCamera => attachedCamera;
+    private bool warnedInvalid;
 
     private void Awake()
     {
         attachedCamera = GetComponent<Camera>();
-
-        ResolveReferences();
+        ResolvePlayerReferences();
         InitializeCamera();
     }
 
-    private void ResolveReferences()
+    private void OnEnable()
     {
-        if (playerController == null && cameraPivot != null)
-        {
-            playerController =
-                cameraPivot.GetComponentInParent<PlayerController>();
-        }
+        if (attachedCamera == null)
+            attachedCamera = GetComponent<Camera>();
 
-        if (cameraLook == null && cameraPivot != null)
+        if (cameraPivot != null)
         {
-            cameraLook =
-                cameraPivot.GetComponent<CameraLook>();
+            ResolvePlayerReferences();
+            InitializeCamera();
         }
+    }
 
-        if (playerController == null)
-        {
-            playerController =
-                FindAnyObjectByType<PlayerController>();
-        }
+    private void ResolvePlayerReferences()
+    {
+        if (cameraPivot == null)
+            return;
 
-        if (cameraLook == null)
-        {
-            cameraLook =
-                FindAnyObjectByType<CameraLook>();
-        }
+        cameraLook = cameraPivot.GetComponent<CameraLook>();
 
-        if (playerRb == null && playerController != null)
-        {
-            playerRb =
-                playerController.GetComponent<Rigidbody>();
-        }
+        playerRb =
+            cameraPivot.GetComponentInParent<Rigidbody>();
+
+        playerController =
+            cameraPivot.GetComponentInParent<PlayerController>();
+
+        if (playerRb != null)
+            playerTransform = playerRb.transform;
+        else if (playerController != null)
+            playerTransform = playerController.transform;
+        else
+            playerTransform = cameraPivot.root;
     }
 
     private void InitializeCamera()
     {
         if (cameraPivot == null)
-        {
-            Debug.LogWarning(
-                "CameraFollow: Camera Pivot is not assigned.",
-                this
-            );
             return;
-        }
 
-        smoothedPivotPosition = cameraPivot.position;
+        Vector3 pivotPosition = cameraPivot.position;
+        Quaternion pivotRotation = cameraPivot.rotation;
 
-        unrolledRotation = cameraLook != null
-            ? cameraLook.AimRotation
-            : cameraPivot.rotation;
+        if (!IsFinite(pivotPosition) ||
+            !IsFinite(pivotRotation))
+            return;
 
-        unrolledCameraPosition =
-            smoothedPivotPosition +
-            unrolledRotation * cameraOffset;
+        smoothedFollowPosition = pivotPosition;
+        followVelocity = Vector3.zero;
+
+        previousPivotPosition = pivotPosition;
+        hasPreviousPivotPosition = true;
+
+        flipBlend = 0f;
+        flipBlendVelocity = 0f;
+
+        Vector3 initialPosition =
+            smoothedFollowPosition +
+            pivotRotation * cameraOffset;
+
+        if (!IsFinite(initialPosition))
+            return;
 
         transform.SetPositionAndRotation(
-            unrolledCameraPosition,
-            unrolledRotation
+            initialPosition,
+            pivotRotation
         );
+
+        lastValidPosition = initialPosition;
+        lastValidRotation = pivotRotation;
+
+        if (attachedCamera != null)
+            attachedCamera.fieldOfView = normalFOV;
 
         initialized = true;
-    }
-
-    public Vector3 GetUnrolledAimOrigin()
-    {
-        return initialized
-            ? unrolledCameraPosition
-            : transform.position;
-    }
-
-    private bool IsVerticalFlip()
-    {
-        return playerController != null &&
-               playerController.IsVerticalFlipping;
-    }
-
-    private float GetFirstPersonBlend()
-    {
-        if (!enableFirstPersonFlips || !IsVerticalFlip())
-            return 0f;
-
-        float progress = playerController.FlipProgress;
-
-        float enter = Mathf.Clamp(
-            enterFirstPersonAt, 0.01f, 0.45f
-        );
-
-        float exit = Mathf.Clamp(
-            exitFirstPersonAt, 0.55f, 0.99f
-        );
-
-        if (progress < enter)
-            return Smooth01(progress / enter);
-
-        if (progress > exit)
-        {
-            return 1f - Smooth01(
-                (progress - exit) / (1f - exit)
-            );
-        }
-
-        return 1f;
-    }
-
-    private Vector3 GetEyePosition()
-    {
-        if (headTransform != null)
-            return headTransform.position;
-
-        if (playerController == null)
-            return cameraPivot.position;
-
-        // Eye anchor relative to the rotating body.
-        // This rotates the eye position around the
-        // character's root during the somersault.
-        return playerController.transform.position +
-            playerController.FlipBodyRotation * eyeOffset;
-    }
-
-    private Quaternion GetFirstPersonRotation(
-        Quaternion aimRotation)
-    {
-        if (playerController == null)
-            return aimRotation;
-
-        // Aim pitch remains independently controlled.
-        // The player supplies the actual somersault
-        // and the inverted 180-degree Y-axis turn.
-        float pitch = NormalizeAngle(
-            aimRotation.eulerAngles.x
-        );
-
-        Quaternion pitchRotation =
-            Quaternion.Euler(pitch, 0f, 0f);
-
-        Quaternion extraPitch =
-            Quaternion.Euler(
-                flipCameraPitchOffset, 0f, 0f
-            );
-
-        return playerController.FlipBodyRotation *
-               pitchRotation *
-               extraPitch;
     }
 
     private void LateUpdate()
@@ -233,7 +166,7 @@ public class CameraFollow : MonoBehaviour
 
         if (!initialized)
         {
-            ResolveReferences();
+            ResolvePlayerReferences();
             InitializeCamera();
 
             if (!initialized)
@@ -241,140 +174,284 @@ public class CameraFollow : MonoBehaviour
         }
 
         Vector3 pivotPosition = cameraPivot.position;
+        Quaternion pivotRotation = cameraPivot.rotation;
 
-        if (Vector3.Distance(
-            smoothedPivotPosition,
-            pivotPosition
-        ) > maximumFollowDistance)
+        if (!IsFinite(pivotPosition) ||
+            !IsFinite(pivotRotation))
         {
-            smoothedPivotPosition = pivotPosition;
-            followVelocity = Vector3.zero;
-        }
-        else
-        {
-            smoothedPivotPosition = Vector3.SmoothDamp(
-                smoothedPivotPosition,
-                pivotPosition,
-                ref followVelocity,
-                Mathf.Max(0.001f, followSmoothTime)
-            );
+            RestoreLastValidCamera();
+            return;
         }
 
-        Quaternion baseRotation = cameraLook != null
-            ? cameraLook.AimRotation
-            : cameraPivot.rotation;
+        UpdateFlipBlend();
+        UpdateSmoothedFollowPosition(pivotPosition);
 
-        // Normal third-person position.
         Vector3 normalPosition =
-            smoothedPivotPosition +
-            baseRotation * cameraOffset;
+            smoothedFollowPosition +
+            pivotRotation * cameraOffset;
 
-        Quaternion normalRotation = baseRotation;
+        Quaternion normalRotation = pivotRotation;
 
-        if (rotateCameraTowardAimPoint &&
-            cameraLook != null)
+        Vector3 desiredPosition = normalPosition;
+        Quaternion desiredRotation = normalRotation;
+
+        if (enableFlipTopView &&
+            playerTransform != null &&
+            flipBlend > 0.0001f)
         {
-            Vector3 aimDirection =
-                cameraLook.AimPoint - normalPosition;
+            float yaw = playerController != null
+                ? playerController.MouseYaw
+                : playerTransform.eulerAngles.y;
 
-            if (aimDirection.sqrMagnitude > 0.001f)
-            {
-                Quaternion targetRotation =
-                    Quaternion.LookRotation(
-                        aimDirection.normalized,
-                        Vector3.up
-                    );
+            Quaternion yawRotation =
+                Quaternion.Euler(0f, yaw, 0f);
 
-                normalRotation = Quaternion.Slerp(
-                    unrolledRotation,
-                    targetRotation,
-                    1f - Mathf.Exp(
-                        -aimRotationSpeed * Time.deltaTime
-                    )
+            Vector3 topPosition =
+                smoothedFollowPosition +
+                Vector3.up * flipTopHeight +
+                yawRotation *
+                (Vector3.back * flipTopBackDistance);
+
+            desiredPosition = Vector3.Lerp(
+                normalPosition,
+                topPosition,
+                flipBlend
+            );
+
+            float mousePitch = cameraLook != null
+                ? cameraLook.Pitch
+                : Mathf.DeltaAngle(
+                    0f,
+                    cameraPivot.localEulerAngles.x
                 );
+
+            if (freeAimDuringFlips)
+            {
+                desiredRotation =
+                    yawRotation *
+                    Quaternion.Euler(
+                        mousePitch +
+                        overheadBasePitch * flipBlend,
+                        0f,
+                        0f
+                    );
+            }
+            else
+            {
+                Vector3 lookTarget =
+                    playerTransform.position -
+                    Vector3.up * flipLookDownDistance;
+
+                Vector3 direction =
+                    lookTarget - topPosition;
+
+                if (direction.sqrMagnitude > 0.0001f)
+                {
+                    desiredRotation = Quaternion.Slerp(
+                        normalRotation,
+                        Quaternion.LookRotation(
+                            direction,
+                            Vector3.up
+                        ),
+                        flipBlend
+                    );
+                }
             }
         }
 
-        Vector3 finalPosition = normalPosition;
-        Quaternion finalRotation = normalRotation;
-
-        bool verticalFlip = IsVerticalFlip();
-
-        if (verticalFlip && enableFirstPersonFlips)
+        if (!IsFinite(desiredPosition) ||
+            !IsFinite(desiredRotation))
         {
-            float blend = GetFirstPersonBlend();
-
-            Vector3 eyePosition = GetEyePosition();
-
-            Quaternion firstPersonRotation =
-                GetFirstPersonRotation(baseRotation);
-
-            // Move into the character's eyes.
-            finalPosition = Vector3.Lerp(
-                normalPosition,
-                eyePosition,
-                blend
-            );
-
-            // Rotate with the entire body maneuver:
-            // somersault + inverted Y-axis half-turn.
-            finalRotation = Quaternion.Slerp(
-                normalRotation,
-                firstPersonRotation,
-                blend
-            );
+            RestoreLastValidCamera();
+            return;
         }
-        else if (playerController != null &&
-                 playerController.IsCartwheeling &&
-                 rollWithCartwheel)
+
+        if (enableCameraCollision)
         {
-            // Preserve existing cartwheel roll.
-            finalRotation *= Quaternion.Euler(
-                0f,
-                0f,
-                playerController.FlipAngle * rollAmount
+            desiredPosition = ResolveCameraCollision(
+                smoothedFollowPosition,
+                desiredPosition
             );
         }
 
-        // Independent aim reference for CameraLook.
-        // Do not apply the flip rotation here.
-        unrolledCameraPosition =
-            verticalFlip && enableFirstPersonFlips
-            ? GetEyePosition()
-            : normalPosition;
-
-        unrolledRotation = normalRotation;
-
-        // Keep first-person flips from being pushed
-        // away from the head by camera collision.
-        if (enableCameraCollision &&
-            (!verticalFlip || !enableFirstPersonFlips))
+        if (!IsFinite(desiredPosition))
         {
-            finalPosition = ResolveCollision(
-                smoothedPivotPosition,
-                finalPosition
-            );
+            RestoreLastValidCamera();
+            return;
         }
 
         transform.SetPositionAndRotation(
-            finalPosition,
-            finalRotation
+            desiredPosition,
+            desiredRotation
         );
 
-        UpdateFOV(verticalFlip);
+        lastValidPosition = desiredPosition;
+        lastValidRotation = desiredRotation;
+
+        warnedInvalid = false;
+
+        UpdateFieldOfView();
     }
 
-    private Vector3 ResolveCollision(
+    private void UpdateSmoothedFollowPosition(
+        Vector3 targetPosition)
+    {
+        bool teleported = false;
+
+        if (hasPreviousPivotPosition)
+        {
+            float pivotTravel =
+                Vector3.Distance(
+                    targetPosition,
+                    previousPivotPosition
+                );
+
+            teleported =
+                pivotTravel > teleportDetectionDistance;
+        }
+
+        previousPivotPosition = targetPosition;
+        hasPreviousPivotPosition = true;
+
+        float followDistance =
+            Vector3.Distance(
+                smoothedFollowPosition,
+                targetPosition
+            );
+
+        if (teleported ||
+            (maxFollowDistance > 0f &&
+             followDistance > maxFollowDistance))
+        {
+            smoothedFollowPosition = targetPosition;
+            followVelocity = Vector3.zero;
+            return;
+        }
+
+        float horizontalTime =
+            Mathf.Max(
+                0.0001f,
+                horizontalSmoothTime
+            );
+
+        float verticalTime =
+            Mathf.Max(
+                0.0001f,
+                verticalSmoothTime
+            );
+
+        if (playerRb != null &&
+            playerRb.linearVelocity.magnitude > dashThreshold)
+        {
+            horizontalTime =
+                Mathf.Max(
+                    0.0001f,
+                    dashSmoothTime
+                );
+        }
+
+        if (flipBlend > 0.001f)
+        {
+            float flipTime =
+                Mathf.Max(
+                    0.0001f,
+                    flipPositionSmoothTime
+                );
+
+            horizontalTime = flipTime;
+            verticalTime = flipTime;
+        }
+
+        float x = Mathf.SmoothDamp(
+            smoothedFollowPosition.x,
+            targetPosition.x,
+            ref followVelocity.x,
+            horizontalTime,
+            Mathf.Infinity,
+            Time.deltaTime
+        );
+
+        float y = Mathf.SmoothDamp(
+            smoothedFollowPosition.y,
+            targetPosition.y,
+            ref followVelocity.y,
+            verticalTime,
+            Mathf.Infinity,
+            Time.deltaTime
+        );
+
+        float z = Mathf.SmoothDamp(
+            smoothedFollowPosition.z,
+            targetPosition.z,
+            ref followVelocity.z,
+            horizontalTime,
+            Mathf.Infinity,
+            Time.deltaTime
+        );
+
+        Vector3 nextPosition =
+            new Vector3(x, y, z);
+
+        if (IsFinite(nextPosition))
+        {
+            smoothedFollowPosition = nextPosition;
+        }
+        else
+        {
+            smoothedFollowPosition = targetPosition;
+            followVelocity = Vector3.zero;
+        }
+    }
+
+    private void UpdateFlipBlend()
+    {
+        bool overheadFlip = false;
+
+        if (enableFlipTopView &&
+            playerController != null &&
+            playerController.IsFlipping)
+        {
+            PlayerController.TrickType trick =
+                playerController.CurrentTrick;
+
+            overheadFlip =
+                trick == PlayerController.TrickType.FrontFlip ||
+                trick == PlayerController.TrickType.BackFlip;
+        }
+
+        float targetBlend =
+            overheadFlip ? 1f : 0f;
+
+        float smoothTime = overheadFlip
+            ? flipTransitionInTime
+            : flipTransitionOutTime;
+
+        flipBlend = Mathf.SmoothDamp(
+            flipBlend,
+            targetBlend,
+            ref flipBlendVelocity,
+            Mathf.Max(0.0001f, smoothTime),
+            Mathf.Infinity,
+            Time.deltaTime
+        );
+
+        flipBlend = Mathf.Clamp01(flipBlend);
+    }
+
+    private Vector3 ResolveCameraCollision(
         Vector3 origin,
         Vector3 target)
     {
-        Vector3 displacement = target - origin;
+        Vector3 displacement =
+            target - origin;
+
         float distance = displacement.magnitude;
 
-        if (distance < 0.001f)
+        if (distance < 0.0001f)
             return target;
 
-        Vector3 direction = displacement / distance;
+        Vector3 direction =
+            displacement / distance;
 
         RaycastHit[] hits = Physics.SphereCastAll(
             origin,
@@ -385,7 +462,7 @@ public class CameraFollow : MonoBehaviour
             QueryTriggerInteraction.Ignore
         );
 
-        float nearest = distance;
+        float closestDistance = distance;
         bool blocked = false;
 
         foreach (RaycastHit hit in hits)
@@ -393,15 +470,17 @@ public class CameraFollow : MonoBehaviour
             if (hit.collider == null)
                 continue;
 
-            if (playerController != null &&
+            if (playerTransform != null &&
                 hit.collider.transform.IsChildOf(
-                    playerController.transform
+                    playerTransform
                 ))
-                continue;
-
-            if (hit.distance < nearest)
             {
-                nearest = hit.distance;
+                continue;
+            }
+
+            if (hit.distance < closestDistance)
+            {
+                closestDistance = hit.distance;
                 blocked = true;
             }
         }
@@ -411,27 +490,23 @@ public class CameraFollow : MonoBehaviour
 
         return origin +
             direction *
-            Mathf.Max(0f, nearest - wallOffset);
+            Mathf.Max(
+                0f,
+                closestDistance - wallOffset
+            );
     }
 
-    private void UpdateFOV(bool verticalFlip)
+    private void UpdateFieldOfView()
     {
         if (attachedCamera == null)
             return;
 
         float targetFOV = normalFOV;
 
-        if (verticalFlip && enableFirstPersonFlips)
+        if (playerRb != null)
         {
-            targetFOV = Mathf.Lerp(
-                normalFOV,
-                firstPersonFlipFOV,
-                GetFirstPersonBlend()
-            );
-        }
-        else if (playerRb != null)
-        {
-            Vector3 velocity = playerRb.linearVelocity;
+            Vector3 velocity =
+                playerRb.linearVelocity;
 
             if (velocity.magnitude > dashThreshold)
                 targetFOV = dashFOV;
@@ -439,23 +514,63 @@ public class CameraFollow : MonoBehaviour
                 targetFOV = jumpFOV;
         }
 
+        float blend =
+            1f - Mathf.Exp(
+                -Mathf.Max(0f, fovSpeed) *
+                Time.deltaTime
+            );
+
         attachedCamera.fieldOfView = Mathf.Lerp(
             attachedCamera.fieldOfView,
             targetFOV,
-            1f - Mathf.Exp(
-                -fovSpeed * Time.deltaTime
-            )
+            blend
         );
     }
 
-    private static float Smooth01(float value)
+    private void RestoreLastValidCamera()
     {
-        float t = Mathf.Clamp01(value);
-        return t * t * (3f - 2f * t);
+        if (!warnedInvalid)
+        {
+            Debug.LogWarning(
+                "CameraFollow detected an invalid " +
+                "camera target and restored its " +
+                "last valid transform.",
+                this
+            );
+
+            warnedInvalid = true;
+        }
+
+        if (IsFinite(lastValidPosition) &&
+            IsFinite(lastValidRotation))
+        {
+            transform.SetPositionAndRotation(
+                lastValidPosition,
+                lastValidRotation
+            );
+        }
+
+        followVelocity = Vector3.zero;
     }
 
-    private static float NormalizeAngle(float angle)
+    private static bool IsFinite(float value)
     {
-        return Mathf.DeltaAngle(0f, angle);
+        return !float.IsNaN(value) &&
+               !float.IsInfinity(value);
+    }
+
+    private static bool IsFinite(Vector3 value)
+    {
+        return IsFinite(value.x) &&
+               IsFinite(value.y) &&
+               IsFinite(value.z);
+    }
+
+    private static bool IsFinite(Quaternion value)
+    {
+        return IsFinite(value.x) &&
+               IsFinite(value.y) &&
+               IsFinite(value.z) &&
+               IsFinite(value.w);
     }
 }

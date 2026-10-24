@@ -1,202 +1,124 @@
 
 using UnityEngine;
 
-[DefaultExecutionOrder(-50)]
+[DefaultExecutionOrder(-200)]
 public class CameraLook : MonoBehaviour
 {
-    [Header("Mouse Aim")]
+    [Header("Mouse Settings")]
     [SerializeField] private float mouseSensitivity = 2f;
-    [SerializeField] private float minPitch = -60f;
-    [SerializeField] private float maxPitch = 60f;
+    [SerializeField] private float minRotation = -60f;
+    [SerializeField] private float maxRotation = 60f;
 
-    [Header("Front Flip Aim")]
-    [SerializeField] private float frontFlipMinPitch = -85f;
-    [SerializeField] private float frontFlipMaxPitch = 85f;
-
-    [Header("Aim Target")]
-    [SerializeField] private float aimRange = 150f;
+    [Header("Shooting Aim")]
+    [SerializeField] private float aimDistance = 1000f;
     [SerializeField] private LayerMask aimLayers = ~0;
-    [SerializeField] private float mouseReleaseThreshold = 0.05f;
 
-    [Header("References")]
-    [SerializeField] private PlayerController playerController;
-    [SerializeField] private CameraFollow cameraFollow;
+    private float verticalRotation;
 
-    private float pitch;
-    private Transform anchoredTransform;
-    private Vector3 anchoredLocalPoint;
-    private Vector3 aimPoint;
-    private bool hasAnchor;
+    private Camera mainCamera;
 
-    public float Pitch => pitch;
-    public Vector3 AimPoint => aimPoint;
-    public bool HasAnchor => hasAnchor;
+    // Used by the restored CameraFollow.
+    public float Pitch => verticalRotation;
 
-    public Quaternion AimRotation
-    {
-        get
-        {
-            float yaw = playerController != null
-                ? playerController.MouseYaw
-                : transform.eulerAngles.y;
+    // Used by BulletShooter.
+    public Vector3 AimPoint { get; private set; }
 
-            return Quaternion.Euler(pitch, yaw, 0f);
-        }
-    }
+    // Compatibility properties for other scripts.
+    public float AimYaw => transform.eulerAngles.y;
+
+    public Quaternion AimRotation => transform.rotation;
+
+    public Vector3 AimDirection =>
+        transform.forward;
 
     private void Awake()
     {
-        if (playerController == null)
-            playerController =
-                GetComponentInParent<PlayerController>();
+        mainCamera = Camera.main;
 
-        if (cameraFollow == null)
-            cameraFollow =
-                FindAnyObjectByType<CameraFollow>();
-
-        pitch = Mathf.DeltaAngle(
+        verticalRotation = Mathf.DeltaAngle(
             0f,
             transform.localEulerAngles.x
         );
 
-        aimPoint =
+        AimPoint =
             transform.position +
-            transform.forward * aimRange;
+            transform.forward * aimDistance;
     }
 
     private void Update()
     {
-        bool frontFlipping =
-            playerController != null &&
-            playerController.IsFrontFlipping;
-
-        float lowerLimit = frontFlipping
-            ? frontFlipMinPitch
-            : minPitch;
-
-        float upperLimit = frontFlipping
-            ? frontFlipMaxPitch
-            : maxPitch;
-
         if (Cursor.lockState == CursorLockMode.Locked)
         {
-            float mouseY = Input.GetAxisRaw("Mouse Y");
-            float mouseX = Input.GetAxisRaw("Mouse X");
+            float mouseY =
+                Input.GetAxis("Mouse Y");
 
-            pitch -= mouseY * mouseSensitivity;
+            verticalRotation -=
+                mouseY * mouseSensitivity;
 
-            bool mouseMoved =
-                Mathf.Abs(mouseX) > mouseReleaseThreshold ||
-                Mathf.Abs(mouseY) > mouseReleaseThreshold;
+            verticalRotation = Mathf.Clamp(
+                verticalRotation,
+                minRotation,
+                maxRotation
+            );
 
-            if (mouseMoved || frontFlipping)
-                ReleaseAnchor();
+            transform.localRotation =
+                Quaternion.Euler(
+                    verticalRotation,
+                    0f,
+                    0f
+                );
         }
 
-        pitch = Mathf.Clamp(
-            pitch,
-            lowerLimit,
-            upperLimit
-        );
-
-        transform.localRotation =
-            Quaternion.Euler(pitch, 0f, 0f);
+        if (mainCamera == null)
+            mainCamera = Camera.main;
     }
 
     private void LateUpdate()
     {
-        bool flipping =
-            playerController != null &&
-            playerController.IsFlipping;
-
-        bool frontFlipping =
-            playerController != null &&
-            playerController.IsFrontFlipping;
-
-        if (!flipping || frontFlipping)
-        {
-            ReleaseAnchor();
-            UpdateAimPoint(false);
-        }
-        else if (hasAnchor && anchoredTransform != null)
-        {
-            aimPoint =
-                anchoredTransform.TransformPoint(
-                    anchoredLocalPoint
-                );
-        }
-        else
-        {
-            UpdateAimPoint(true);
-        }
+        if (mainCamera != null)
+            RefreshAimPoint(mainCamera);
     }
 
-    private void UpdateAimPoint(bool allowAnchor)
+    public void RefreshAimPoint(Camera cam)
     {
-        Vector3 origin = cameraFollow != null
-            ? cameraFollow.GetUnrolledAimOrigin()
-            : transform.position;
+        if (cam == null)
+            return;
 
-        Vector3 direction =
-            AimRotation * Vector3.forward;
+        Ray ray = cam.ViewportPointToRay(
+            new Vector3(0.5f, 0.5f, 0f)
+        );
 
         RaycastHit[] hits = Physics.RaycastAll(
-            origin,
-            direction,
-            aimRange,
+            ray,
+            aimDistance,
             aimLayers,
             QueryTriggerInteraction.Ignore
         );
 
-        float nearestDistance = aimRange;
-        RaycastHit nearestHit = default;
-        bool found = false;
+        float closestDistance = aimDistance;
+
+        Vector3 targetPoint =
+            ray.origin +
+            ray.direction * aimDistance;
+
+        Transform playerRoot = transform.root;
 
         foreach (RaycastHit hit in hits)
         {
             if (hit.collider == null)
                 continue;
 
-            if (playerController != null &&
-                hit.collider.transform.IsChildOf(
-                    playerController.transform
-                ))
+            // Don't aim at the player's own collider.
+            if (hit.collider.transform.IsChildOf(playerRoot))
                 continue;
 
-            if (hit.distance < nearestDistance)
+            if (hit.distance < closestDistance)
             {
-                nearestDistance = hit.distance;
-                nearestHit = hit;
-                found = true;
+                closestDistance = hit.distance;
+                targetPoint = hit.point;
             }
         }
 
-        if (found)
-        {
-            aimPoint = nearestHit.point;
-
-            if (allowAnchor)
-            {
-                anchoredTransform =
-                    nearestHit.collider.transform;
-
-                anchoredLocalPoint =
-                    anchoredTransform.InverseTransformPoint(
-                        nearestHit.point
-                    );
-
-                hasAnchor = true;
-            }
-        }
-        else
-        {
-            aimPoint = origin + direction * aimRange;
-        }
-    }
-
-    public void ReleaseAnchor()
-    {
-        hasAnchor = false;
-        anchoredTransform = null;
+        AimPoint = targetPoint;
     }
 }

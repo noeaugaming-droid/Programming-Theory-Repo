@@ -25,12 +25,19 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float dashDuration = 0.2f;
     [SerializeField] private float dashCooldown = 1f;
 
-    [Header("References")]
+    [Header("Visual Model")]
     [SerializeField] private Transform visualModel;
-    [SerializeField] private Transform cameraPivot;
-    [SerializeField] private CameraLook cameraLook;
 
-    [Header("Double Tap Tricks")]
+    [Header("Camera Pivot")]
+    [Tooltip("Assign Player/Pivot here. The pivot stays parented to Player.")]
+    [SerializeField] private Transform cameraPivot;
+
+    [Header("Flip Aim Steering")]
+    [Tooltip("Steer flip travel toward mouse aim while continuing the flip.")]
+    [SerializeField] private bool steerFlipTravelWithAim = true;
+    [SerializeField] private float flipSteeringSpeed = 720f;
+
+    [Header("Double Tap Flip")]
     [SerializeField] private float doubleTapWindow = 0.7f;
     [SerializeField] private float flipUpwardVelocity = 9f;
     [SerializeField] private float flipHorizontalSpeed = 12f;
@@ -39,63 +46,21 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float apexVelocityDamping = 1f;
     [SerializeField] private float apexWindow = 0.5f;
 
-    [Header("Flip Restriction")]
-    [Tooltip("Only one flip is allowed until the player lands.")]
-    [SerializeField] private bool oneFlipPerLanding = true;
-
-    [Tooltip("Ground contact time required to unlock the next flip.")]
-    [SerializeField] private float groundedResetTime = 0.08f;
-
-    [Header("Target Orbit Cartwheels")]
-    [SerializeField] private bool enableAimOrbit = true;
-    [SerializeField] private float minimumOrbitRadius = 2.5f;
-    [SerializeField] private float maximumOrbitRadius = 25f;
-    [SerializeField] private float orbitSteering = 14f;
-    [SerializeField] private float orbitFacingSpeed = 18f;
-    [SerializeField] private float orbitRadiusCorrection = 0.65f;
-
-    [Header("Front / Back Somersaults")]
-    [SerializeField] private bool enableInvertedHalfTurn = true;
-
-    [Range(0.05f, 0.45f)]
-    [SerializeField] private float halfTurnStart = 0.38f;
-
-    [Range(0.55f, 0.95f)]
-    [SerializeField] private float halfTurnEnd = 0.62f;
-
-    [SerializeField] private float frontFlipSteeringSpeed = 9f;
-    [SerializeField] private float frontFlipLandingSpeed = 10f;
-
     public bool IsFlipping { get; private set; }
     public TrickType CurrentTrick { get; private set; }
     public float FlipAngle { get; private set; }
     public float FlipProgress { get; private set; }
-    public float FlipTurnAngle { get; private set; }
+
     public float MouseYaw => mouseYaw;
-
-    public bool IsCartwheeling =>
-        IsFlipping &&
-        (CurrentTrick == TrickType.CartwheelLeft ||
-         CurrentTrick == TrickType.CartwheelRight);
-
-    public bool IsFrontFlipping =>
-        IsFlipping && CurrentTrick == TrickType.FrontFlip;
-
-    public bool IsVerticalFlipping =>
-        IsFlipping &&
-        (CurrentTrick == TrickType.FrontFlip ||
-         CurrentTrick == TrickType.BackFlip);
-
-    public Quaternion FlipBodyRotation { get; private set; }
-        = Quaternion.identity;
 
     private Rigidbody rb;
     private CapsuleCollider capsule;
+
     private Quaternion originalVisualRotation;
+    private Quaternion originalPivotLocalRotation;
 
     private Vector2 moveInput;
     private float mouseYaw;
-    private float facingYaw;
 
     private float lastSpaceTime = -100f;
     private float lastDashTime = -100f;
@@ -111,16 +76,7 @@ public class PlayerController : MonoBehaviour
     private Vector3 flipAxis;
     private float flipSign;
 
-    private float orbitRadius;
-    private bool orbitActive;
-
-    private float flipStartingYaw;
-    private float flipEndingYaw;
-
-    // True after the first flip starts.
-    // Resets only after the player lands.
-    private bool flipUsedSinceLanding;
-    private float groundedTimer;
+    private const float MinimumTime = 0.0001f;
 
     private void Awake()
     {
@@ -130,31 +86,43 @@ public class PlayerController : MonoBehaviour
         rb.useGravity = false;
         rb.interpolation = RigidbodyInterpolation.Interpolate;
         rb.constraints |= RigidbodyConstraints.FreezeRotation;
+        rb.angularVelocity = Vector3.zero;
 
         mouseYaw = transform.eulerAngles.y;
-        facingYaw = mouseYaw;
 
         if (visualModel != null)
-            originalVisualRotation = visualModel.localRotation;
+        {
+            originalVisualRotation =
+                visualModel.localRotation;
+        }
 
-        if (cameraLook == null)
-            cameraLook = GetComponentInChildren<CameraLook>();
+        if (cameraPivot == null)
+        {
+            CameraLook look =
+                GetComponentInChildren<CameraLook>();
 
-        if (cameraPivot == null && cameraLook != null)
-            cameraPivot = cameraLook.transform;
+            if (look != null)
+                cameraPivot = look.transform;
+        }
+
+        if (cameraPivot != null)
+        {
+            originalPivotLocalRotation =
+                cameraPivot.localRotation;
+        }
     }
 
     private void Update()
     {
         if (Cursor.lockState == CursorLockMode.Locked)
         {
-            moveInput = Vector2.ClampMagnitude(
-                new Vector2(
-                    Input.GetAxisRaw("Horizontal"),
-                    Input.GetAxisRaw("Vertical")
-                ),
-                1f
+            moveInput = new Vector2(
+                Input.GetAxisRaw("Horizontal"),
+                Input.GetAxisRaw("Vertical")
             );
+
+            moveInput =
+                Vector2.ClampMagnitude(moveInput, 1f);
 
             mouseYaw +=
                 Input.GetAxisRaw("Mouse X") *
@@ -162,7 +130,8 @@ public class PlayerController : MonoBehaviour
 
             if (Input.GetKeyDown(KeyCode.Space))
             {
-                if (Time.time - lastSpaceTime <= doubleTapWindow)
+                if (Time.time - lastSpaceTime <=
+                    doubleTapWindow)
                 {
                     flipQueued = true;
                     jumpQueued = false;
@@ -183,20 +152,25 @@ public class PlayerController : MonoBehaviour
             moveInput = Vector2.zero;
         }
 
-        UpdateFlipProgress();
+        UpdateFlipVisual();
     }
 
     private void FixedUpdate()
     {
+        rb.MoveRotation(
+            Quaternion.Euler(0f, mouseYaw, 0f)
+        );
+
+        rb.angularVelocity = Vector3.zero;
+
         UpdateGroundedState();
-        UpdateFlipAvailability();
 
         if (flipQueued)
         {
             flipQueued = false;
             jumpQueued = false;
 
-            if (CanStartFlip())
+            if (!IsFlipping)
                 StartFlip();
         }
         else if (jumpQueued)
@@ -210,110 +184,68 @@ public class PlayerController : MonoBehaviour
         if (dashQueued)
         {
             dashQueued = false;
-            TryDash();
+            TryStartDash();
         }
 
-        dashTimer = Mathf.Max(
-            0f,
-            dashTimer - Time.fixedDeltaTime
-        );
+        if (dashTimer > 0f)
+        {
+            dashTimer = Mathf.Max(
+                0f,
+                dashTimer - Time.fixedDeltaTime
+            );
+        }
 
         if (IsFlipping)
             ApplyFlipMovement();
         else
             ApplyNormalMovement();
 
-        rb.MoveRotation(
-            Quaternion.Euler(0f, facingYaw, 0f)
-        );
-
-        rb.angularVelocity = Vector3.zero;
+        float gravityMultiplier =
+            IsFlipping ? flipGravityMultiplier : 1f;
 
         rb.AddForce(
-            Vector3.down * gravity *
-            (IsFlipping ? flipGravityMultiplier : 1f),
+            Vector3.down * gravity * gravityMultiplier,
             ForceMode.Acceleration
         );
     }
 
-    private bool CanStartFlip()
-    {
-        if (IsFlipping)
-            return false;
-
-        if (oneFlipPerLanding && flipUsedSinceLanding)
-            return false;
-
-        // The FIRST flip is allowed in the air.
-        return true;
-    }
-
-    private void UpdateFlipAvailability()
-    {
-        if (!flipUsedSinceLanding)
-            return;
-
-        // Do not reset while the flip is active.
-        if (IsFlipping)
-        {
-            groundedTimer = 0f;
-            return;
-        }
-
-        // Only landing can unlock another flip.
-        if (isGrounded && rb.linearVelocity.y <= 0.1f)
-        {
-            groundedTimer += Time.fixedDeltaTime;
-
-            if (groundedTimer >= groundedResetTime)
-            {
-                flipUsedSinceLanding = false;
-                groundedTimer = 0f;
-            }
-        }
-        else
-        {
-            groundedTimer = 0f;
-        }
-    }
-
     private void LateUpdate()
     {
-        if (visualModel == null)
-            return;
-
-        Quaternion desiredYaw =
-            Quaternion.Euler(0f, facingYaw, 0f);
+        Quaternion immediateWorldYaw =
+            Quaternion.Euler(0f, mouseYaw, 0f);
 
         Quaternion correction =
             Quaternion.Inverse(transform.rotation) *
-            desiredYaw;
+            immediateWorldYaw;
 
-        Quaternion trickRotation = Quaternion.identity;
-
-        if (IsCartwheeling)
+        if (visualModel != null)
         {
-            // Preserve cartwheel rotation.
-            trickRotation =
-                Quaternion.AngleAxis(FlipAngle, flipAxis);
-        }
-        else if (IsVerticalFlipping)
-        {
-            trickRotation =
-                Quaternion.AngleAxis(
+            Quaternion flipRotation =
+                IsFlipping
+                ? Quaternion.AngleAxis(
                     FlipAngle,
-                    Vector3.right
-                ) *
-                Quaternion.AngleAxis(
-                    FlipTurnAngle,
-                    Vector3.up
-                );
+                    flipAxis
+                )
+                : Quaternion.identity;
+
+            visualModel.localRotation =
+                correction *
+                originalVisualRotation *
+                flipRotation;
         }
 
-        visualModel.localRotation =
-            correction *
-            originalVisualRotation *
-            trickRotation;
+        if (cameraPivot != null)
+        {
+            Vector3 localEuler =
+                cameraPivot.localEulerAngles;
+
+            float pitch =
+                Mathf.DeltaAngle(0f, localEuler.x);
+
+            cameraPivot.rotation =
+                immediateWorldYaw *
+                Quaternion.Euler(pitch, 0f, 0f);
+        }
     }
 
     private void UpdateGroundedState()
@@ -327,19 +259,28 @@ public class PlayerController : MonoBehaviour
         Vector3 center =
             transform.TransformPoint(capsule.center);
 
-        float radius = capsule.radius *
+        float radius =
+            capsule.radius *
             Mathf.Max(
                 Mathf.Abs(transform.lossyScale.x),
                 Mathf.Abs(transform.lossyScale.z)
             );
 
-        float height = capsule.height *
+        float height =
+            capsule.height *
             Mathf.Abs(transform.lossyScale.y);
 
-        Vector3 origin = center +
-            Vector3.down *
-            (Mathf.Max(radius, height * 0.5f) -
-             radius - 0.08f);
+        float bottom =
+            center.y - Mathf.Max(
+                height * 0.5f,
+                radius
+            );
+
+        Vector3 origin = new Vector3(
+            center.x,
+            bottom + radius + 0.08f,
+            center.z
+        );
 
         RaycastHit[] hits = Physics.SphereCastAll(
             origin,
@@ -354,9 +295,13 @@ public class PlayerController : MonoBehaviour
 
         foreach (RaycastHit hit in hits)
         {
-            if (hit.collider != null &&
-                !hit.collider.transform.IsChildOf(transform) &&
-                hit.normal.y > 0.5f)
+            if (hit.collider == null)
+                continue;
+
+            if (hit.collider.transform.IsChildOf(transform))
+                continue;
+
+            if (hit.normal.y > 0.5f)
             {
                 isGrounded = true;
                 break;
@@ -367,14 +312,14 @@ public class PlayerController : MonoBehaviour
     private void Jump()
     {
         Vector3 velocity = rb.linearVelocity;
+
         velocity.y = jumpForce;
         rb.linearVelocity = velocity;
 
         isGrounded = false;
-        groundedTimer = 0f;
     }
 
-    private void TryDash()
+    private void TryStartDash()
     {
         if (Time.time - lastDashTime < dashCooldown)
             return;
@@ -383,27 +328,42 @@ public class PlayerController : MonoBehaviour
         dashTimer = dashDuration;
     }
 
-    private Vector3 GetMoveDirection()
+    private Vector3 GetMovementDirection()
     {
-        Vector3 direction =
-            Quaternion.Euler(0f, mouseYaw, 0f) *
-            new Vector3(moveInput.x, 0f, moveInput.y);
+        Quaternion yawRotation =
+            Quaternion.Euler(0f, mouseYaw, 0f);
 
-        return Vector3.ClampMagnitude(direction, 1f);
+        Vector3 direction =
+            yawRotation *
+            new Vector3(
+                moveInput.x,
+                0f,
+                moveInput.y
+            );
+
+        return Vector3.ClampMagnitude(
+            direction,
+            1f
+        );
     }
 
     private void ApplyNormalMovement()
     {
-        facingYaw = mouseYaw;
+        Vector3 direction =
+            GetMovementDirection();
 
-        Vector3 direction = GetMoveDirection();
+        float currentSpeed =
+            dashTimer > 0f
+            ? dashSpeed
+            : speed;
+
         Vector3 velocity = rb.linearVelocity;
 
-        float movementSpeed =
-            dashTimer > 0f ? dashSpeed : speed;
+        velocity.x =
+            direction.x * currentSpeed;
 
-        velocity.x = direction.x * movementSpeed;
-        velocity.z = direction.z * movementSpeed;
+        velocity.z =
+            direction.z * currentSpeed;
 
         rb.linearVelocity = velocity;
     }
@@ -441,150 +401,65 @@ public class PlayerController : MonoBehaviour
             flipSign = 1f;
         }
 
-        // Lock further flips until landing.
-        flipUsedSinceLanding = true;
-        groundedTimer = 0f;
-
         IsFlipping = true;
         flipTimer = 0f;
         FlipProgress = 0f;
         FlipAngle = 0f;
-        FlipTurnAngle = 0f;
 
-        flipStartingYaw = facingYaw;
-        flipEndingYaw = flipStartingYaw + 180f;
-
-        flipDirection = GetMoveDirection();
+        flipDirection =
+            GetMovementDirection();
 
         if (flipDirection.sqrMagnitude < 0.01f)
         {
             flipDirection =
-                Quaternion.Euler(0f, mouseYaw, 0f) *
-                Vector3.forward;
-        }
-
-        orbitActive = false;
-
-        if (enableAimOrbit &&
-            IsCartwheeling &&
-            cameraLook != null)
-        {
-            Vector3 offset =
-                cameraLook.AimPoint - rb.position;
-
-            offset.y = 0f;
-
-            float distance = offset.magnitude;
-
-            if (distance >= minimumOrbitRadius &&
-                distance <= maximumOrbitRadius)
-            {
-                orbitActive = true;
-                orbitRadius = distance;
-            }
+                Quaternion.Euler(
+                    0f,
+                    mouseYaw,
+                    0f
+                ) * Vector3.forward;
         }
 
         Vector3 velocity =
             flipDirection * flipHorizontalSpeed;
 
         velocity.y = flipUpwardVelocity;
+
         rb.linearVelocity = velocity;
         isGrounded = false;
     }
 
     private void ApplyFlipMovement()
     {
-        Vector3 desiredDirection = flipDirection;
-
-        if (IsCartwheeling && orbitActive && cameraLook != null)
+        if (steerFlipTravelWithAim)
         {
-            Vector3 toTarget =
-                cameraLook.AimPoint - rb.position;
+            Vector3 targetDirection = GetMovementDirection();
 
-            toTarget.y = 0f;
-
-            float distance = toTarget.magnitude;
-
-            if (distance > 0.1f)
+            if (targetDirection.sqrMagnitude < 0.01f)
             {
-                Vector3 inward = toTarget / distance;
-
-                float side =
-                    CurrentTrick == TrickType.CartwheelRight
-                    ? 1f : -1f;
-
-                Vector3 tangent =
-                    Vector3.Cross(Vector3.up, inward) * side;
-
-                float radiusError = distance - orbitRadius;
-
-                float correction = Mathf.Clamp(
-                    radiusError * orbitRadiusCorrection,
-                    -0.6f,
-                    0.6f
-                );
-
-                desiredDirection =
-                    (tangent + inward * correction).normalized;
-
-                float targetYaw =
-                    Mathf.Atan2(inward.x, inward.z) *
-                    Mathf.Rad2Deg;
-
-                facingYaw = Mathf.LerpAngle(
-                    facingYaw,
-                    targetYaw,
-                    1f - Mathf.Exp(
-                        -orbitFacingSpeed * Time.fixedDeltaTime
-                    )
-                );
+                targetDirection =
+                    Quaternion.Euler(
+                        0f,
+                        mouseYaw,
+                        0f
+                    ) * Vector3.forward;
             }
+
+            flipDirection = Vector3.RotateTowards(
+                flipDirection,
+                targetDirection.normalized,
+                Mathf.Max(0f, flipSteeringSpeed) *
+                    Mathf.Deg2Rad * Time.fixedDeltaTime,
+                0f
+            );
         }
-        else if (IsVerticalFlipping)
-        {
-            facingYaw = flipStartingYaw;
-
-            if (IsFrontFlipping && cameraLook != null)
-            {
-                Vector3 toAim =
-                    cameraLook.AimPoint - rb.position;
-
-                toAim.y = 0f;
-
-                if (toAim.sqrMagnitude > 0.001f)
-                {
-                    float steering =
-                        FlipProgress >= 0.5f
-                        ? frontFlipLandingSpeed
-                        : frontFlipSteeringSpeed;
-
-                    desiredDirection = Vector3.Slerp(
-                        flipDirection,
-                        toAim.normalized,
-                        1f - Mathf.Exp(
-                            -steering * Time.fixedDeltaTime
-                        )
-                    ).normalized;
-                }
-            }
-        }
-        else
-        {
-            facingYaw = mouseYaw;
-        }
-
-        flipDirection = Vector3.Slerp(
-            flipDirection,
-            desiredDirection,
-            1f - Mathf.Exp(
-                -orbitSteering * Time.fixedDeltaTime
-            )
-        ).normalized;
 
         Vector3 velocity = rb.linearVelocity;
 
-        velocity.x = flipDirection.x * flipHorizontalSpeed;
-        velocity.z = flipDirection.z * flipHorizontalSpeed;
+        velocity.x =
+            flipDirection.x * flipHorizontalSpeed;
+
+        velocity.z =
+            flipDirection.z * flipHorizontalSpeed;
 
         if (Mathf.Abs(velocity.y) < apexWindow)
         {
@@ -595,91 +470,55 @@ public class PlayerController : MonoBehaviour
         rb.linearVelocity = velocity;
     }
 
-    private void UpdateFlipProgress()
+    private void UpdateFlipVisual()
     {
         if (!IsFlipping)
             return;
 
         flipTimer += Time.deltaTime;
 
-        FlipProgress = Mathf.Clamp01(
-            flipTimer / Mathf.Max(0.0001f, flipDuration)
-        );
+        float duration =
+            Mathf.Max(
+                MinimumTime,
+                flipDuration
+            );
+
+        float progress =
+            Mathf.Clamp01(
+                flipTimer / duration
+            );
+
+        float eased =
+            progress * progress *
+            (3f - 2f * progress);
+
+        FlipProgress = progress;
 
         FlipAngle =
-            360f * Smooth01(FlipProgress) * flipSign;
+            360f * eased * flipSign;
 
-        if (IsVerticalFlipping)
+        if (progress >= 1f)
         {
-            float turnStart = Mathf.Clamp(
-                halfTurnStart, 0.05f, 0.45f
-            );
-
-            float turnEnd = Mathf.Clamp(
-                halfTurnEnd, 0.55f, 0.95f
-            );
-
-            float turnProgress = Mathf.InverseLerp(
-                turnStart,
-                turnEnd,
-                FlipProgress
-            );
-
-            FlipTurnAngle = enableInvertedHalfTurn
-                ? 180f * Smooth01(turnProgress)
-                : 0f;
-
-            FlipBodyRotation =
-                Quaternion.Euler(0f, flipStartingYaw, 0f) *
-                Quaternion.AngleAxis(
-                    FlipAngle, Vector3.right
-                ) *
-                Quaternion.AngleAxis(
-                    FlipTurnAngle, Vector3.up
-                );
-        }
-        else
-        {
-            FlipTurnAngle = 0f;
-            FlipBodyRotation = Quaternion.identity;
-        }
-
-        if (FlipProgress >= 1f)
-        {
-            bool wasVertical = IsVerticalFlipping;
-
             IsFlipping = false;
             CurrentTrick = TrickType.None;
+
             FlipProgress = 0f;
             FlipAngle = 0f;
-            FlipTurnAngle = 0f;
-            orbitActive = false;
-
-            if (wasVertical)
-            {
-                facingYaw = enableInvertedHalfTurn
-                    ? flipEndingYaw
-                    : flipStartingYaw;
-
-                mouseYaw = facingYaw;
-            }
-
-            FlipBodyRotation = Quaternion.identity;
-
-            // Do NOT reset flipUsedSinceLanding here.
-            // The player must touch the ground first.
         }
-    }
-
-    private static float Smooth01(float value)
-    {
-        float t = Mathf.Clamp01(value);
-        return t * t * (3f - 2f * t);
     }
 
     private void OnDisable()
     {
         if (visualModel != null)
-            visualModel.localRotation = originalVisualRotation;
+        {
+            visualModel.localRotation =
+                originalVisualRotation;
+        }
+
+        if (cameraPivot != null)
+        {
+            cameraPivot.localRotation =
+                originalPivotLocalRotation;
+        }
     }
 }

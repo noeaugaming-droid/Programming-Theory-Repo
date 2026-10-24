@@ -988,6 +988,12 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 4294967295
   mouseReleaseThreshold: 0.05
+  enableFreeAim: 1
+  freeAimSensitivity: 0.025
+  horizontalAimRange: 0.55
+  verticalAimRange: 0.45
+  aimReturnSpeed: 7
+  holdFreeAimWhileAirborne: 1
   playerController: {fileID: 608680344}
   cameraFollow: {fileID: 961739758}
 --- !u!1 &322262435
@@ -1413,9 +1419,9 @@ MonoBehaviour:
   cameraPivot: {fileID: 311949418}
   cameraLook: {fileID: 311949419}
   doubleTapWindow: 0.7
-  flipUpwardVelocity: 40
-  flipHorizontalSpeed: 12
-  flipDuration: 0.5
+  flipUpwardVelocity: 25
+  flipHorizontalSpeed: 40
+  flipDuration: 2
   flipGravityMultiplier: 2
   apexVelocityDamping: 1
   apexWindow: 0.5
@@ -1427,11 +1433,14 @@ MonoBehaviour:
   orbitSteering: 14
   orbitFacingSpeed: 18
   orbitRadiusCorrection: 0.65
-  enableInvertedHalfTurn: 1
-  halfTurnStart: 0.45
-  halfTurnEnd: 0.95
-  frontFlipSteeringSpeed: 9
-  frontFlipLandingSpeed: 10
+  useCinematicVerticalFlips: 1
+  landingTurnDegrees: 180
+  landingTurnStart: 0.2
+  landingTurnEnd: 0.9
+  faceCrosshairDuringFlip: 1
+  crosshairFacingSpeed: 14
+  maximumAimYawOffset: 35
+  preserveFlipTravelDirection: 1
 --- !u!114 &608680345
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2412,12 +2421,92 @@ MonoBehaviour:
   aimRotationSpeed: 18
   rollWithCartwheel: 1
   rollAmount: 1
-  enableFirstPersonFlips: 1
-  eyeOffset: {x: 0, y: 1.65, z: 0.12}
-  headTransform: {fileID: 0}
-  enterFirstPersonAt: 0.18
-  exitFirstPersonAt: 0.82
-  flipCameraPitchOffset: 0
+  enableCinematicFlipCamera: 1
+  overheadHeight: 10
+  zoomOutDistance: 10
+  orbitDegrees: 180
+  cameraRiseCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  cameraOrbitCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  cameraZoomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  normalFocusHeight: 1.5
+  apexPlayerScreenLift: 1.1
+  descentScreenDrop: 0.5
+  horizontalFollowStrength: 1
+  cinematicPositionSmooth: 12
+  horizontalAimInfluence: 0.08
+  maximumAimCameraYaw: 8
+  landingBlendDuration: 0.35
+  waitForLanding: 1
+  preserveUprightHorizon: 1
   enableCameraCollision: 1
   cameraRadius: 0.3
   wallOffset: 0.1
@@ -2425,7 +2514,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 63
   normalFOV: 90
-  firstPersonFlipFOV: 100
+  cinematicFlipFOV: 100
   jumpFOV: 65
   dashFOV: 120
   dashThreshold: 15
@@ -3399,6 +3488,9 @@ MonoBehaviour:
   clampToScreen: 1
   screenPadding: 20
   alwaysVisibleDuringFlips: 1
+  useFreeAimDuringFlips: 1
+  crosshairSmoothSpeed: 18
+  smoothReturnToNormal: 1
 --- !u!1 &1706193401
 GameObject:
   m_ObjectHideFlags: 0
