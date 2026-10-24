@@ -1,4 +1,5 @@
 
+using System.Collections.Generic;
 using UnityEngine;
 
 [DefaultExecutionOrder(-100)]
@@ -29,11 +30,9 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private Transform visualModel;
 
     [Header("Camera Pivot")]
-    [Tooltip("Assign Player/Pivot here. The pivot stays parented to Player.")]
     [SerializeField] private Transform cameraPivot;
 
     [Header("Flip Aim Steering")]
-    [Tooltip("Steer flip travel toward mouse aim while continuing the flip.")]
     [SerializeField] private bool steerFlipTravelWithAim = true;
     [SerializeField] private float flipSteeringSpeed = 720f;
 
@@ -46,12 +45,23 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float apexVelocityDamping = 1f;
     [SerializeField] private float apexWindow = 0.5f;
 
+    [Header("Landing Detection")]
+    [Tooltip("Minimum upward surface normal to count as ground.")]
+    [Range(0f, 1f)]
+    [SerializeField] private float minimumGroundNormalY = 0.5f;
+
     public bool IsFlipping { get; private set; }
     public TrickType CurrentTrick { get; private set; }
     public float FlipAngle { get; private set; }
     public float FlipProgress { get; private set; }
 
     public float MouseYaw => mouseYaw;
+
+    // True from flip takeoff until physical landing contact.
+    // CameraLook uses this to select the flip aim clamps.
+    public bool UseFlipAimClamp { get; private set; }
+
+    public bool IsGrounded => isGrounded;
 
     private Rigidbody rb;
     private CapsuleCollider capsule;
@@ -75,6 +85,17 @@ public class PlayerController : MonoBehaviour
     private Vector3 flipDirection;
     private Vector3 flipAxis;
     private float flipSign;
+
+    // Prevents the ground beneath the player at takeoff
+    // from being mistaken for a new landing.
+    private bool leftGroundSinceFlip;
+
+    // Tracks actual collision contacts, not just a raycast.
+    private readonly HashSet<Collider> groundContacts =
+        new HashSet<Collider>();
+
+    private readonly ContactPoint[] contactBuffer =
+        new ContactPoint[32];
 
     private const float MinimumTime = 0.0001f;
 
@@ -165,6 +186,13 @@ public class PlayerController : MonoBehaviour
 
         UpdateGroundedState();
 
+        // Once the player has left the ground after a flip,
+        // the next valid ground contact is a landing.
+        if (UseFlipAimClamp && !isGrounded)
+        {
+            leftGroundSinceFlip = true;
+        }
+
         if (flipQueued)
         {
             flipQueued = false;
@@ -252,7 +280,7 @@ public class PlayerController : MonoBehaviour
     {
         if (capsule == null)
         {
-            isGrounded = false;
+            isGrounded = groundContacts.Count > 0;
             return;
         }
 
@@ -301,11 +329,72 @@ public class PlayerController : MonoBehaviour
             if (hit.collider.transform.IsChildOf(transform))
                 continue;
 
-            if (hit.normal.y > 0.5f)
+            if (hit.normal.y > minimumGroundNormalY)
             {
                 isGrounded = true;
                 break;
             }
+        }
+
+        if (groundContacts.Count > 0)
+            isGrounded = true;
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        ProcessGroundContact(collision);
+    }
+
+    private void OnCollisionStay(Collision collision)
+    {
+        ProcessGroundContact(collision);
+    }
+
+    private void OnCollisionExit(Collision collision)
+    {
+        groundContacts.Remove(collision.collider);
+    }
+
+    private void ProcessGroundContact(Collision collision)
+    {
+        if (collision == null ||
+            collision.collider == null)
+            return;
+
+        if (collision.collider.transform.IsChildOf(transform))
+            return;
+
+        int count = collision.GetContacts(contactBuffer);
+
+        bool validGroundContact = false;
+
+        for (int i = 0; i < count; i++)
+        {
+            if (contactBuffer[i].normal.y >
+                minimumGroundNormalY)
+            {
+                validGroundContact = true;
+                break;
+            }
+        }
+
+        if (!validGroundContact)
+        {
+            groundContacts.Remove(collision.collider);
+            return;
+        }
+
+        groundContacts.Add(collision.collider);
+        isGrounded = true;
+
+        // Normal aim clamps activate at physical landing,
+        // regardless of whether the flip animation has ended.
+        if (UseFlipAimClamp &&
+            leftGroundSinceFlip &&
+            rb.linearVelocity.y <= 0.1f)
+        {
+            UseFlipAimClamp = false;
+            leftGroundSinceFlip = false;
         }
     }
 
@@ -406,6 +495,13 @@ public class PlayerController : MonoBehaviour
         FlipProgress = 0f;
         FlipAngle = 0f;
 
+        // Activate flip clamps at takeoff.
+        UseFlipAimClamp = true;
+
+        // Wait until physically airborne before
+        // accepting any ground collision as landing.
+        leftGroundSinceFlip = !isGrounded;
+
         flipDirection =
             GetMovementDirection();
 
@@ -432,7 +528,8 @@ public class PlayerController : MonoBehaviour
     {
         if (steerFlipTravelWithAim)
         {
-            Vector3 targetDirection = GetMovementDirection();
+            Vector3 targetDirection =
+                GetMovementDirection();
 
             if (targetDirection.sqrMagnitude < 0.01f)
             {
@@ -504,7 +601,23 @@ public class PlayerController : MonoBehaviour
 
             FlipProgress = 0f;
             FlipAngle = 0f;
+
+            // Intentionally do not change UseFlipAimClamp.
+            // It changes only when the collider lands.
         }
+    }
+
+    public void AlignFacingToCamera(float worldYaw)
+    {
+        mouseYaw = worldYaw;
+
+        Quaternion facing =
+            Quaternion.Euler(0f, worldYaw, 0f);
+
+        transform.rotation = facing;
+
+        if (rb != null)
+            rb.MoveRotation(facing);
     }
 
     private void OnDisable()
@@ -520,5 +633,9 @@ public class PlayerController : MonoBehaviour
             cameraPivot.localRotation =
                 originalPivotLocalRotation;
         }
+
+        groundContacts.Clear();
+        UseFlipAimClamp = false;
+        leftGroundSinceFlip = false;
     }
 }

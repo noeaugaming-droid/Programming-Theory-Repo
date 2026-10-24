@@ -6,6 +6,8 @@ public class CameraLook : MonoBehaviour
 {
     [Header("Mouse Settings")]
     [SerializeField] private float mouseSensitivity = 2f;
+
+    [Header("Vertical Aim Limits")]
     [SerializeField] private float minRotation = -60f;
     [SerializeField] private float maxRotation = 60f;
 
@@ -14,22 +16,17 @@ public class CameraLook : MonoBehaviour
     [SerializeField] private LayerMask aimLayers = ~0;
 
     private float verticalRotation;
-
     private Camera mainCamera;
 
-    // Used by the restored CameraFollow.
     public float Pitch => verticalRotation;
 
-    // Used by BulletShooter.
     public Vector3 AimPoint { get; private set; }
 
-    // Compatibility properties for other scripts.
     public float AimYaw => transform.eulerAngles.y;
 
     public Quaternion AimRotation => transform.rotation;
 
-    public Vector3 AimDirection =>
-        transform.forward;
+    public Vector3 AimDirection => transform.forward;
 
     private void Awake()
     {
@@ -40,6 +37,14 @@ public class CameraLook : MonoBehaviour
             transform.localEulerAngles.x
         );
 
+        verticalRotation = Mathf.Clamp(
+            verticalRotation,
+            Mathf.Max(-89f, Mathf.Min(minRotation, maxRotation)),
+            Mathf.Min(89f, Mathf.Max(minRotation, maxRotation))
+        );
+
+        ApplyPivotRotation();
+
         AimPoint =
             transform.position +
             transform.forward * aimDistance;
@@ -49,28 +54,40 @@ public class CameraLook : MonoBehaviour
     {
         if (Cursor.lockState == CursorLockMode.Locked)
         {
-            float mouseY =
-                Input.GetAxis("Mouse Y");
+            float mouseY = Input.GetAxis("Mouse Y");
 
-            verticalRotation -=
-                mouseY * mouseSensitivity;
-
-            verticalRotation = Mathf.Clamp(
-                verticalRotation,
-                minRotation,
-                maxRotation
-            );
-
-            transform.localRotation =
-                Quaternion.Euler(
-                    verticalRotation,
-                    0f,
-                    0f
-                );
+            verticalRotation -= mouseY * mouseSensitivity;
         }
+
+        float minimumPitch = Mathf.Max(
+            -89f,
+            Mathf.Min(minRotation, maxRotation)
+        );
+
+        float maximumPitch = Mathf.Min(
+            89f,
+            Mathf.Max(minRotation, maxRotation)
+        );
+
+        verticalRotation = Mathf.Clamp(
+            verticalRotation,
+            minimumPitch,
+            maximumPitch
+        );
+
+        ApplyPivotRotation();
 
         if (mainCamera == null)
             mainCamera = Camera.main;
+    }
+
+    private void ApplyPivotRotation()
+    {
+        transform.localRotation = Quaternion.Euler(
+            verticalRotation,
+            0f,
+            0f
+        );
     }
 
     private void LateUpdate()
@@ -108,7 +125,6 @@ public class CameraLook : MonoBehaviour
             if (hit.collider == null)
                 continue;
 
-            // Don't aim at the player's own collider.
             if (hit.collider.transform.IsChildOf(playerRoot))
                 continue;
 

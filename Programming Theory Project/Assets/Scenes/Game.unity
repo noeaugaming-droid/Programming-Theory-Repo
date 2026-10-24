@@ -878,7 +878,8 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 1567951339}
   m_Father: {fileID: 608680343}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!23 &233048237
@@ -979,23 +980,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mouseSensitivity: 2
-  minPitch: -60
-  maxPitch: 60
-  frontFlipMinPitch: -85
-  frontFlipMaxPitch: 85
-  aimRange: 150
+  minRotation: -60
+  maxRotation: 80
+  aimDistance: 150
   aimLayers:
     serializedVersion: 2
     m_Bits: 4294967295
-  mouseReleaseThreshold: 0.05
-  enableFreeAim: 1
-  freeAimSensitivity: 0.025
-  horizontalAimRange: 0.55
-  verticalAimRange: 0.45
-  aimReturnSpeed: 7
-  holdFreeAimWhileAirborne: 1
-  playerController: {fileID: 608680344}
-  cameraFollow: {fileID: 961739758}
 --- !u!1 &322262435
 GameObject:
   m_ObjectHideFlags: 0
@@ -1391,7 +1381,6 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 233048236}
-  - {fileID: 1567951339}
   - {fileID: 768958583}
   - {fileID: 311949418}
   m_Father: {fileID: 0}
@@ -1417,30 +1406,16 @@ MonoBehaviour:
   dashCooldown: 1
   visualModel: {fileID: 233048236}
   cameraPivot: {fileID: 311949418}
-  cameraLook: {fileID: 311949419}
+  steerFlipTravelWithAim: 1
+  flipSteeringSpeed: 720
   doubleTapWindow: 0.7
   flipUpwardVelocity: 25
-  flipHorizontalSpeed: 40
-  flipDuration: 2
+  flipHorizontalSpeed: 15
+  flipDuration: 1
   flipGravityMultiplier: 2
   apexVelocityDamping: 1
   apexWindow: 0.5
-  oneFlipPerLanding: 1
-  groundedResetTime: 0.08
-  enableAimOrbit: 1
-  minimumOrbitRadius: 2.5
-  maximumOrbitRadius: 25
-  orbitSteering: 14
-  orbitFacingSpeed: 18
-  orbitRadiusCorrection: 0.65
-  useCinematicVerticalFlips: 1
-  landingTurnDegrees: 180
-  landingTurnStart: 0.2
-  landingTurnEnd: 0.9
-  faceCrosshairDuringFlip: 1
-  crosshairFacingSpeed: 14
-  maximumAimYawOffset: 35
-  preserveFlipTravelDirection: 1
+  minimumGroundNormalY: 0.5
 --- !u!114 &608680345
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2412,114 +2387,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   cameraPivot: {fileID: 311949418}
-  playerController: {fileID: 608680344}
-  cameraLook: {fileID: 311949419}
   cameraOffset: {x: 1, y: 1, z: -5}
-  followSmoothTime: 0
-  maximumFollowDistance: 15
-  rotateCameraTowardAimPoint: 1
-  aimRotationSpeed: 18
-  rollWithCartwheel: 1
-  rollAmount: 1
-  enableCinematicFlipCamera: 1
-  overheadHeight: 10
-  zoomOutDistance: 10
-  orbitDegrees: 180
-  cameraRiseCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    - serializedVersion: 3
-      time: 1
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  cameraOrbitCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    - serializedVersion: 3
-      time: 1
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  cameraZoomCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    - serializedVersion: 3
-      time: 1
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  normalFocusHeight: 1.5
-  apexPlayerScreenLift: 1.1
-  descentScreenDrop: 0.5
-  horizontalFollowStrength: 1
-  cinematicPositionSmooth: 12
-  horizontalAimInfluence: 0.08
-  maximumAimCameraYaw: 8
-  landingBlendDuration: 0.35
-  waitForLanding: 1
-  preserveUprightHorizon: 1
+  horizontalSmoothTime: 0.1
+  verticalSmoothTime: 0.1
+  dashSmoothTime: 0.18
+  maxFollowDistance: 15
+  teleportDetectionDistance: 8
+  dashThreshold: 15
+  jumpThreshold: 1
+  normalFOV: 90
+  jumpFOV: 65
+  dashFOV: 120
+  fovSpeed: 6
   enableCameraCollision: 1
   cameraRadius: 0.3
   wallOffset: 0.1
   collisionLayers:
     serializedVersion: 2
     m_Bits: 63
-  normalFOV: 90
-  cinematicFlipFOV: 100
-  jumpFOV: 65
-  dashFOV: 120
-  dashThreshold: 15
-  jumpThreshold: 1
-  fovSpeed: 6
 --- !u!1 &978325867
 GameObject:
   m_ObjectHideFlags: 0
@@ -3195,12 +3080,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1567951338}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0.25, z: 0.6}
   m_LocalScale: {x: 0.2, y: 0.2, z: 0.2}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 608680343}
+  m_Father: {fileID: 233048236}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!23 &1567951340
 MeshRenderer:
@@ -3480,17 +3365,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8c8546df26c431d46acf5ddfaeee2e79, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cameraLook: {fileID: 311949419}
-  cameraFollow: {fileID: 961739758}
-  playerController: {fileID: 608680344}
   crosshairRect: {fileID: 1594600569}
   canvas: {fileID: 867973829}
-  clampToScreen: 1
-  screenPadding: 20
-  alwaysVisibleDuringFlips: 1
-  useFreeAimDuringFlips: 1
-  crosshairSmoothSpeed: 18
-  smoothReturnToNormal: 1
 --- !u!1 &1706193401
 GameObject:
   m_ObjectHideFlags: 0
