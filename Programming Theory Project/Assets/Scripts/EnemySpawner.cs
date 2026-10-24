@@ -4,6 +4,8 @@ using TMPro;
 
 public class EnemySpawner : MonoBehaviour
 {
+    #region Enemies_And_Spawning_Variables
+    // Values and references used by this part of the script.
     [Header("Wave UI")]
     [SerializeField] private TMP_Text waveText;
 
@@ -16,6 +18,18 @@ public class EnemySpawner : MonoBehaviour
     [SerializeField] private int enemyCount = 3;
     [SerializeField] private float waveDelay = 2f;
 
+    #endregion
+    #region Physics_And_Movement_Variables
+    // Values and references used by this part of the script.
+    #endregion
+    #region Enemies_And_Spawning_Variables
+    // Values and references used by this part of the script.
+    #endregion
+    #region Physics_And_Movement_Variables
+    // Values and references used by this part of the script.
+    #endregion
+    #region Enemies_And_Spawning_Variables
+    // Values and references used by this part of the script.
     [Header("Safe Surface Spawning")]
     [SerializeField] private LayerMask spawnSurfaceLayers = ~0;
     [SerializeField] private LayerMask obstructionLayers = ~0;
@@ -27,10 +41,19 @@ public class EnemySpawner : MonoBehaviour
     [SerializeField] private bool logFailedSpawns = true;
 
     private int waveNumber = 1;
+    #endregion
+    #region Combat_And_Health_Variables
+    // Values and references used by this part of the script.
     private PlayerHealth playerHealth;
+    #endregion
+    #region Enemies_And_Spawning_Variables
+    // Values and references used by this part of the script.
     private float nextWaveTime;
     private bool waitingForNextWave;
 
+    #endregion
+    #region Unity_Lifecycle_Methods
+    // Methods Unity calls automatically during the object's lifetime.
     private void Start()
     {
         playerHealth = FindAnyObjectByType<PlayerHealth>();
@@ -69,6 +92,9 @@ public class EnemySpawner : MonoBehaviour
         SpawnWave();
     }
 
+    #endregion
+    #region Enemies_And_Spawning_Methods
+    // Enemy behavior and spawning logic.
     private void SpawnWave()
     {
         if (waveText != null)
@@ -180,6 +206,9 @@ public class EnemySpawner : MonoBehaviour
         return false;
     }
 
+    #endregion
+    #region Physics_And_Movement_Methods
+    // Movement, jumping, collisions, and other physics behavior.
     private bool TryFindSurface(out RaycastHit result)
     {
         result = default;
@@ -377,6 +406,9 @@ public class EnemySpawner : MonoBehaviour
         return true;
     }
 
+    #endregion
+    #region Enemies_And_Spawning_Methods
+    // Enemy behavior and spawning logic.
     private bool SupportsPenetrationTest(Collider collider)
     {
         if (collider is BoxCollider)
@@ -393,4 +425,5 @@ public class EnemySpawner : MonoBehaviour
 
         return false;
     }
+    #endregion
 }

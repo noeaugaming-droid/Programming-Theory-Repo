@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 5464264522307558581}
   - component: {fileID: 7560276413944480069}
   - component: {fileID: 3071791302921391424}
+  - component: {fileID: 1046524976726998882}
   m_Layer: 7
   m_Name: SpiderParent
   m_TagString: Enemy
@@ -58,11 +59,11 @@ Rigidbody:
     m_Bits: 0
   m_ImplicitCom: 1
   m_ImplicitTensor: 1
-  m_UseGravity: 1
+  m_UseGravity: 0
   m_IsKinematic: 0
   m_Interpolate: 1
   m_Constraints: 112
-  m_CollisionDetection: 0
+  m_CollisionDetection: 3
 --- !u!114 &5464264522307558581
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -89,6 +90,11 @@ MonoBehaviour:
   directionChangeInterval: 0.6
   knockbackForce: 10
   knockbackDuration: 0.3
+  maximumJumpDistance: 15
+  jumpCooldown: 2.5
+  jumpDuration: 0.9
+  jumpSearchInterval: 0.5
+  jumpProgressThreshold: 0.5
 --- !u!65 &7560276413944480069
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -124,8 +130,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   climbableLayers:
     serializedVersion: 2
-    m_Bits: 4294967295
-  surfaceOffset: 0.55
+    m_Bits: 265
+  surfaceOffset: 0.7
   surfaceProbeDistance: 1.5
   wallDetectionDistance: 1.2
   edgeProbeDistance: 1.5
@@ -134,6 +140,24 @@ MonoBehaviour:
   surfaceNormalSpeed: 10
   lostSurfaceGravity: 15
   maximumRecoveryDistance: 3
+  obstacleProbeDistance: 1.4
+  enemyAvoidanceRadius: 1.3
+  stuckCheckInterval: 1
+  minimumProgress: 0.4
+  recoveryDuration: 2
+  edgeTurnSearchDistance: 1.2
+--- !u!114 &1046524976726998882
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3445917376494882868}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9f88e9d936bd25845b651888c83d3836, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &8764044467889974491
 PrefabInstance:
   m_ObjectHideFlags: 0

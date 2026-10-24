@@ -15,6 +15,14 @@ public class PlayerController : MonoBehaviour
         BackFlip
     }
 
+    #region Physics_And_Movement_Variables
+    // Values and references used by this part of the script.
+    #endregion
+    #region Player_Variables
+    // Values and references used by this part of the script.
+    #endregion
+    #region Physics_And_Movement_Variables
+    // Values and references used by this part of the script.
     [Header("Movement")]
     [SerializeField] private float speed = 10f;
     [SerializeField] private float mouseSensitivity = 2f;
@@ -26,16 +34,34 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float dashDuration = 0.2f;
     [SerializeField] private float dashCooldown = 1f;
 
+    #endregion
+    #region Player_Variables
+    // Values and references used by this part of the script.
     [Header("Visual Model")]
     [SerializeField] private Transform visualModel;
 
+    #endregion
+    #region Camera_And_Aiming_Variables
+    // Values and references used by this part of the script.
     [Header("Camera Pivot")]
     [SerializeField] private Transform cameraPivot;
 
+    #endregion
+    #region Physics_And_Movement_Variables
+    // Values and references used by this part of the script.
     [Header("Flip Aim Steering")]
     [SerializeField] private bool steerFlipTravelWithAim = true;
     [SerializeField] private float flipSteeringSpeed = 720f;
 
+    #endregion
+    #region Player_Variables
+    // Values and references used by this part of the script.
+    #endregion
+    #region Physics_And_Movement_Variables
+    // Values and references used by this part of the script.
+    #endregion
+    #region Player_Variables
+    // Values and references used by this part of the script.
     [Header("Double Tap Flip")]
     [SerializeField] private float doubleTapWindow = 0.7f;
     [SerializeField] private float flipUpwardVelocity = 9f;
@@ -45,34 +71,59 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float apexVelocityDamping = 1f;
     [SerializeField] private float apexWindow = 0.5f;
 
+    #endregion
+    #region Physics_And_Movement_Variables
+    // Values and references used by this part of the script.
     [Header("Landing Detection")]
     [Tooltip("Minimum upward surface normal to count as ground.")]
     [Range(0f, 1f)]
     [SerializeField] private float minimumGroundNormalY = 0.5f;
+
 
     public bool IsFlipping { get; private set; }
     public TrickType CurrentTrick { get; private set; }
     public float FlipAngle { get; private set; }
     public float FlipProgress { get; private set; }
 
+    #endregion
+    #region Camera_And_Aiming_Variables
+    // Values and references used by this part of the script.
     public float MouseYaw => mouseYaw;
 
     // True from flip takeoff until physical landing contact.
     // CameraLook uses this to select the flip aim clamps.
     public bool UseFlipAimClamp { get; private set; }
 
+    #endregion
+    #region Physics_And_Movement_Variables
+    // Values and references used by this part of the script.
     public bool IsGrounded => isGrounded;
 
+    #endregion
+    #region Player_Variables
+    // Values and references used by this part of the script.
     private Rigidbody rb;
     private CapsuleCollider capsule;
 
     private Quaternion originalVisualRotation;
     private Quaternion originalPivotLocalRotation;
 
+    #endregion
+    #region Physics_And_Movement_Variables
+    // Values and references used by this part of the script.
     private Vector2 moveInput;
+    #endregion
+    #region Camera_And_Aiming_Variables
+    // Values and references used by this part of the script.
     private float mouseYaw;
 
+    #endregion
+    #region Player_Variables
+    // Values and references used by this part of the script.
     private float lastSpaceTime = -100f;
+    #endregion
+    #region Physics_And_Movement_Variables
+    // Values and references used by this part of the script.
     private float lastDashTime = -100f;
     private float dashTimer;
 
@@ -97,8 +148,20 @@ public class PlayerController : MonoBehaviour
     private readonly ContactPoint[] contactBuffer =
         new ContactPoint[32];
 
+    #endregion
+    #region Player_Variables
+    // Values and references used by this part of the script.
     private const float MinimumTime = 0.0001f;
+    #endregion
+    #region Physics_And_Movement_Variables
+    // Values and references used by this part of the script.
+    private bool flipAvailable = true;
 
+    public bool CanFlip => flipAvailable && !IsFlipping;
+
+    #endregion
+    #region Unity_Lifecycle_Methods
+    // Methods Unity calls automatically during the object's lifetime.
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
@@ -186,8 +249,8 @@ public class PlayerController : MonoBehaviour
 
         UpdateGroundedState();
 
-        // Once the player has left the ground after a flip,
-        // the next valid ground contact is a landing.
+        // The player must leave the ground before
+        // another ground contact can count as landing.
         if (UseFlipAimClamp && !isGrounded)
         {
             leftGroundSinceFlip = true;
@@ -198,15 +261,21 @@ public class PlayerController : MonoBehaviour
             flipQueued = false;
             jumpQueued = false;
 
-            if (!IsFlipping)
+            // Only flip if a previous landing
+            // has made another flip available.
+            if (CanFlip)
+            {
                 StartFlip();
+            }
         }
         else if (jumpQueued)
         {
             jumpQueued = false;
 
             if (isGrounded && !IsFlipping)
+            {
                 Jump();
+            }
         }
 
         if (dashQueued)
@@ -224,9 +293,13 @@ public class PlayerController : MonoBehaviour
         }
 
         if (IsFlipping)
+        {
             ApplyFlipMovement();
+        }
         else
+        {
             ApplyNormalMovement();
+        }
 
         float gravityMultiplier =
             IsFlipping ? flipGravityMultiplier : 1f;
@@ -355,6 +428,9 @@ public class PlayerController : MonoBehaviour
         groundContacts.Remove(collision.collider);
     }
 
+    #endregion
+    #region Physics_And_Movement_Methods
+    // Movement, jumping, collisions, and other physics behavior.
     private void ProcessGroundContact(Collision collision)
     {
         if (collision == null ||
@@ -457,6 +533,9 @@ public class PlayerController : MonoBehaviour
         rb.linearVelocity = velocity;
     }
 
+    #endregion
+    #region Unity_Lifecycle_Methods
+    // Methods Unity calls automatically during the object's lifetime.
     private void StartFlip()
     {
         if (moveInput.y > 0.1f)
@@ -524,6 +603,9 @@ public class PlayerController : MonoBehaviour
         isGrounded = false;
     }
 
+    #endregion
+    #region Physics_And_Movement_Methods
+    // Movement, jumping, collisions, and other physics behavior.
     private void ApplyFlipMovement()
     {
         if (steerFlipTravelWithAim)
@@ -567,6 +649,9 @@ public class PlayerController : MonoBehaviour
         rb.linearVelocity = velocity;
     }
 
+    #endregion
+    #region Unity_Lifecycle_Methods
+    // Methods Unity calls automatically during the object's lifetime.
     private void UpdateFlipVisual()
     {
         if (!IsFlipping)
@@ -607,6 +692,9 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    #endregion
+    #region Camera_And_Aiming_Methods
+    // Camera positioning, looking, and aiming behavior.
     public void AlignFacingToCamera(float worldYaw)
     {
         mouseYaw = worldYaw;
@@ -620,6 +708,9 @@ public class PlayerController : MonoBehaviour
             rb.MoveRotation(facing);
     }
 
+    #endregion
+    #region Unity_Lifecycle_Methods
+    // Methods Unity calls automatically during the object's lifetime.
     private void OnDisable()
     {
         if (visualModel != null)
@@ -638,4 +729,5 @@ public class PlayerController : MonoBehaviour
         UseFlipAimClamp = false;
         leftGroundSinceFlip = false;
     }
+    #endregion
 }

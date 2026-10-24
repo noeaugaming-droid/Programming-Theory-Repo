@@ -2720,7 +2720,7 @@ Rigidbody:
   m_IsKinematic: 0
   m_Interpolate: 1
   m_Constraints: 112
-  m_CollisionDetection: 0
+  m_CollisionDetection: 1
 --- !u!136 &608680340
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -2753,7 +2753,7 @@ Transform:
   m_GameObject: {fileID: 608680338}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 200, y: 18.89, z: 150}
+  m_LocalPosition: {x: -136.47, y: 183.8, z: 158.33}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -3869,7 +3869,7 @@ BoxCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 1
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 3
   m_Size: {x: 255, y: 50, z: 255}
   m_Center: {x: 0, y: 0, z: 0}
@@ -5476,7 +5476,7 @@ GameObject:
   - component: {fileID: 1118337980}
   - component: {fileID: 1118337979}
   - component: {fileID: 1118337982}
-  m_Layer: 3
+  m_Layer: 8
   m_Name: Ground
   m_TagString: Ground
   m_Icon: {fileID: 0}
@@ -7754,7 +7754,7 @@ BoxCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 1
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 3
   m_Size: {x: 255, y: 50, z: 255}
   m_Center: {x: 0, y: 0, z: 0}
@@ -8348,7 +8348,7 @@ BoxCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 1
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 3
   m_Size: {x: 255, y: 50, z: 255}
   m_Center: {x: 0, y: 0, z: 0}
@@ -8416,7 +8416,7 @@ BoxCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 1
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 3
   m_Size: {x: 255, y: 50, z: 255}
   m_Center: {x: 0, y: 0, z: 0}
@@ -9533,6 +9533,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2138620845}
   - component: {fileID: 2138620846}
+  - component: {fileID: 2138620847}
   m_Layer: 0
   m_Name: EnemySpawner
   m_TagString: Untagged
@@ -9563,7 +9564,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2138620844}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4fc1c210cf321e74396a23e1f797f346, type: 3}
   m_Name: 
@@ -9573,6 +9574,44 @@ MonoBehaviour:
   beetlePrefab: {fileID: 7173742020872733848, guid: 63d73f94096b38048b9715bbae36ac01, type: 3}
   spawnRange: 100
   enemyCount: 15
+  waveDelay: 2
+  spawnSurfaceLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  obstructionLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  attemptsPerEnemy: 40
+  surfaceClearance: 0.08
+  overlapTolerance: 0.001
+  logFailedSpawns: 1
+--- !u!114 &2138620847
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2138620844}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a54623adb0720b243862eaf0f3c09744, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  baseFloor: {fileID: 1118337979}
+  spiderPrefab: {fileID: 3445917376494882868, guid: 36c9b79ac240ca043be41c8d9b02bb2c, type: 3}
+  beetlePrefab: {fileID: 7173742020872733848, guid: 63d73f94096b38048b9715bbae36ac01, type: 3}
+  waveText: {fileID: 1592840253}
+  spawnRange: 100
+  enemyCount: 15
+  waveDelay: 2
+  spawnSurfaceLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  obstructionLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  attemptsPerEnemy: 40
+  clearance: 0.07
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

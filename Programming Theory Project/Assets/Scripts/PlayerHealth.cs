@@ -4,19 +4,30 @@ using TMPro;
 
 public class PlayerHealth : MonoBehaviour
 {
+    #region Combat_And_Health_Variables
+    // Values and references used by this part of the script.
     [Header("Health")]
     [SerializeField] private float health = 100f;
     [SerializeField] private TMP_Text healthText;
 
+    #endregion
+    #region UI_And_Game_State_Variables
+    // Values and references used by this part of the script.
     [Header("UI")]
     [SerializeField] private GameObject gameOverPanel;
     [SerializeField] private GameObject hud;
 
+    #endregion
+    #region Player_Variables
+    // Values and references used by this part of the script.
     [Header("Game Manager")]
     [SerializeField] private GameManager gameManager;
 
     public bool isDead { get; private set; }
 
+    #endregion
+    #region Unity_Lifecycle_Methods
+    // Methods Unity calls automatically during the object's lifetime.
     private void Start()
     {
         if (gameManager == null)
@@ -28,6 +39,9 @@ public class PlayerHealth : MonoBehaviour
         UpdateHealthText();
     }
 
+    #endregion
+    #region Combat_And_Health_Methods
+    // Attacks, damage, and health-related behavior.
     public void TakeDamage(float amount)
     {
         if (isDead || amount <= 0f)
@@ -73,9 +87,13 @@ public class PlayerHealth : MonoBehaviour
         }
     }
 
+    #endregion
+    #region Unity_Lifecycle_Methods
+    // Methods Unity calls automatically during the object's lifetime.
     private void UpdateHealthText()
     {
         if (healthText != null)
             healthText.text = "Health: " + health;
     }
+    #endregion
 }

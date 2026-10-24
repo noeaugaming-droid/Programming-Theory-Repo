@@ -4,6 +4,8 @@ using UnityEngine;
 [DefaultExecutionOrder(-200)]
 public class CameraLook : MonoBehaviour
 {
+    #region Camera_And_Aiming_Variables
+    // Values and references used by this part of the script.
     [Header("Mouse Settings")]
     [SerializeField] private float mouseSensitivity = 2f;
 
@@ -28,6 +30,9 @@ public class CameraLook : MonoBehaviour
 
     public Vector3 AimDirection => transform.forward;
 
+    #endregion
+    #region Unity_Lifecycle_Methods
+    // Methods Unity calls automatically during the object's lifetime.
     private void Awake()
     {
         mainCamera = Camera.main;
@@ -81,6 +86,9 @@ public class CameraLook : MonoBehaviour
             mainCamera = Camera.main;
     }
 
+    #endregion
+    #region Camera_And_Aiming_Methods
+    // Camera positioning, looking, and aiming behavior.
     private void ApplyPivotRotation()
     {
         transform.localRotation = Quaternion.Euler(
@@ -90,12 +98,18 @@ public class CameraLook : MonoBehaviour
         );
     }
 
+    #endregion
+    #region Unity_Lifecycle_Methods
+    // Methods Unity calls automatically during the object's lifetime.
     private void LateUpdate()
     {
         if (mainCamera != null)
             RefreshAimPoint(mainCamera);
     }
 
+    #endregion
+    #region Camera_And_Aiming_Methods
+    // Camera positioning, looking, and aiming behavior.
     public void RefreshAimPoint(Camera cam)
     {
         if (cam == null)
@@ -137,4 +151,5 @@ public class CameraLook : MonoBehaviour
 
         AimPoint = targetPoint;
     }
+    #endregion
 }

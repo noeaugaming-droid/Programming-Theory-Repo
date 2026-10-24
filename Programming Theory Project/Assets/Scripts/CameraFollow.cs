@@ -5,6 +5,8 @@ using UnityEngine;
 [RequireComponent(typeof(Camera))]
 public class CameraFollow : MonoBehaviour
 {
+    #region Camera_And_Aiming_Variables
+    // Values and references used by this part of the script.
     [Header("Target")]
     [SerializeField] private Transform cameraPivot;
 
@@ -13,36 +15,60 @@ public class CameraFollow : MonoBehaviour
     private Vector3 cameraOffset =
         new Vector3(7f, 5f, -5f);
 
+    #endregion
+    #region Physics_And_Movement_Variables
+    // Values and references used by this part of the script.
     [SerializeField] private float horizontalSmoothTime = 0.1f;
     [SerializeField] private float verticalSmoothTime = 0.1f;
     [SerializeField] private float dashSmoothTime = 0.18f;
 
+    #endregion
+    #region Camera_And_Aiming_Variables
+    // Values and references used by this part of the script.
     [SerializeField] private float maxFollowDistance = 15f;
     [SerializeField] private float teleportDetectionDistance = 8f;
 
+    #endregion
+    #region Physics_And_Movement_Variables
+    // Values and references used by this part of the script.
     [Header("Movement Detection")]
     [SerializeField] private float dashThreshold = 15f;
     [SerializeField] private float jumpThreshold = 1f;
 
+    #endregion
+    #region Camera_And_Aiming_Variables
+    // Values and references used by this part of the script.
     [Header("Field Of View")]
     [SerializeField] private float normalFOV = 90f;
     [SerializeField] private float jumpFOV = 65f;
     [SerializeField] private float dashFOV = 120f;
     [SerializeField] private float fovSpeed = 6f;
 
+    #endregion
+    #region Physics_And_Movement_Variables
+    // Values and references used by this part of the script.
     [Header("Camera Collision")]
     [SerializeField] private bool enableCameraCollision = true;
     [SerializeField] private float cameraRadius = 0.3f;
     [SerializeField] private float wallOffset = 0.1f;
     [SerializeField] private LayerMask collisionLayers = ~0;
 
+    #endregion
+    #region Camera_And_Aiming_Variables
+    // Values and references used by this part of the script.
     private Camera attachedCamera;
     private CameraLook cameraLook;
     private Rigidbody playerRb;
     private Transform playerTransform;
 
     private Vector3 smoothedFollowPosition;
+    #endregion
+    #region Physics_And_Movement_Variables
+    // Values and references used by this part of the script.
     private Vector3 followVelocity;
+    #endregion
+    #region Camera_And_Aiming_Variables
+    // Values and references used by this part of the script.
     private Vector3 previousPivotPosition;
 
     private Vector3 lastValidPosition;
@@ -52,6 +78,9 @@ public class CameraFollow : MonoBehaviour
     private bool initialized;
     private bool warnedInvalid;
 
+    #endregion
+    #region Unity_Lifecycle_Methods
+    // Methods Unity calls automatically during the object's lifetime.
     private void Awake()
     {
         attachedCamera = GetComponent<Camera>();
@@ -69,6 +98,9 @@ public class CameraFollow : MonoBehaviour
         InitializeCamera();
     }
 
+    #endregion
+    #region Camera_And_Aiming_Methods
+    // Camera positioning, looking, and aiming behavior.
     private void ResolveReferences()
     {
         if (cameraPivot == null)
@@ -126,6 +158,9 @@ public class CameraFollow : MonoBehaviour
         initialized = true;
     }
 
+    #endregion
+    #region Unity_Lifecycle_Methods
+    // Methods Unity calls automatically during the object's lifetime.
     private void LateUpdate()
     {
         if (cameraPivot == null)
@@ -368,6 +403,9 @@ public class CameraFollow : MonoBehaviour
         );
     }
 
+    #endregion
+    #region Camera_And_Aiming_Methods
+    // Camera positioning, looking, and aiming behavior.
     private void RestoreLastValidCamera()
     {
         if (!warnedInvalid)
@@ -413,4 +451,5 @@ public class CameraFollow : MonoBehaviour
                IsFinite(value.z) &&
                IsFinite(value.w);
     }
+    #endregion
 }

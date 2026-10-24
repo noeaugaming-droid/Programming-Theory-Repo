@@ -15,6 +15,8 @@ public static class ProjectScriptExporter
     private const string MenuPath =
         "Tools/Project Script Exporter/Export All Scripts";
 
+    #region Editor_Tools_Methods
+    // Methods that help this script do its job.
     [MenuItem(MenuPath)]
     public static void ExportAllScripts()
     {
@@ -290,6 +292,7 @@ public static class ProjectScriptExporter
 
         return normalizedFile;
     }
+    #endregion
 }
 
 #endif

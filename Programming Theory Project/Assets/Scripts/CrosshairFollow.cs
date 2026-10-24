@@ -5,10 +5,21 @@ using UnityEngine.UI;
 [DefaultExecutionOrder(200)]
 public class CrosshairFollow : MonoBehaviour
 {
+    #region Camera_And_Aiming_Variables
+    // Values and references used by this part of the script.
+    #endregion
+    #region UI_And_Game_State_Variables
+    // Values and references used by this part of the script.
+    #endregion
+    #region General_Variables
+    // Values and references used by this part of the script.
     [SerializeField] private RectTransform crosshairRect;
     [SerializeField] private Canvas canvas;
     private Graphic graphic;
 
+    #endregion
+    #region Unity_Lifecycle_Methods
+    // Methods Unity calls automatically during the object's lifetime.
     private void Awake()
     {
         if (crosshairRect == null) crosshairRect = GetComponent<RectTransform>();
@@ -27,5 +38,6 @@ public class CrosshairFollow : MonoBehaviour
             crosshairRect.anchoredPosition = local;
         if (graphic != null) graphic.enabled = true;
     }
+    #endregion
 }
 

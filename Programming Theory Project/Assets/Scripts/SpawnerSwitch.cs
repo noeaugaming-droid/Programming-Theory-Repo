@@ -3,6 +3,8 @@ using UnityEngine;
 
 public class SpawnerSwitch : MonoBehaviour
 {
+    #region Enemies_And_Spawning_Variables
+    // Values and references used by this part of the script.
     [SerializeField] private Transform player;
     [SerializeField] private Transform enemySpawner;
 
@@ -22,4 +24,5 @@ public class SpawnerSwitch : MonoBehaviour
             enemySpawner.position = transform.position;
         }
     }
+    #endregion
 }

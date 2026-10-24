@@ -14,9 +14,14 @@ using System.Reflection;
 
 public class GameDiagnostics : EditorWindow
 {
+    #region Editor_Tools_Variables
+    // Values and references used by this part of the script.
     private Vector2 scrollPosition;
     private string report = "";
 
+    #endregion
+    #region Editor_Tools_Methods
+    // Methods that help this script do its job.
     [MenuItem("Tools/They Be Buggin/Game Diagnostics")]
     public static void OpenWindow()
     {
@@ -25,6 +30,9 @@ public class GameDiagnostics : EditorWindow
         );
     }
 
+    #endregion
+    #region Unity_Lifecycle_Methods
+    // Methods Unity calls automatically during the object's lifetime.
     private void OnGUI()
     {
         GUILayout.Label(
@@ -79,6 +87,9 @@ public class GameDiagnostics : EditorWindow
         EditorGUILayout.EndScrollView();
     }
 
+    #endregion
+    #region Editor_Tools_Methods
+    // Methods that help this script do its job.
     private void GenerateReport()
     {
         StringBuilder sb = new StringBuilder();
@@ -343,6 +354,9 @@ public class GameDiagnostics : EditorWindow
         }
     }
 
+    #endregion
+    #region Camera_And_Aiming_Methods
+    // Camera positioning, looking, and aiming behavior.
     private void ScanCameras(StringBuilder sb)
     {
         AddHeader(sb, "CAMERA INFORMATION");
@@ -443,6 +457,9 @@ public class GameDiagnostics : EditorWindow
         }
     }
 
+    #endregion
+    #region Editor_Tools_Methods
+    // Methods that help this script do its job.
     private void ScanPlayers(StringBuilder sb)
     {
         AddHeader(sb, "PLAYER AND PHYSICS");
@@ -1168,6 +1185,7 @@ public class GameDiagnostics : EditorWindow
             );
         }
     }
+    #endregion
 }
 
 #endif

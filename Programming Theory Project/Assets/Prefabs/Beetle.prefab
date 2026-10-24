@@ -26,7 +26,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 767821226957512290}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -274,6 +274,8 @@ GameObject:
   - component: {fileID: 3930668188146708030}
   - component: {fileID: 5641668874554751005}
   - component: {fileID: 8735315752466292506}
+  - component: {fileID: 307249563640708125}
+  - component: {fileID: 1171948373167395600}
   m_Layer: 7
   m_Name: Beetle
   m_TagString: Enemy
@@ -318,7 +320,7 @@ CapsuleCollider:
   serializedVersion: 2
   m_Radius: 0.5
   m_Height: 2
-  m_Direction: 1
+  m_Direction: 2
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!54 &3930668188146708030
 Rigidbody:
@@ -342,11 +344,11 @@ Rigidbody:
     m_Bits: 0
   m_ImplicitCom: 1
   m_ImplicitTensor: 1
-  m_UseGravity: 1
+  m_UseGravity: 0
   m_IsKinematic: 0
   m_Interpolate: 1
   m_Constraints: 80
-  m_CollisionDetection: 0
+  m_CollisionDetection: 3
 --- !u!114 &5641668874554751005
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -389,8 +391,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   climbableLayers:
     serializedVersion: 2
-    m_Bits: 4294967295
-  surfaceOffset: 0.55
+    m_Bits: 265
+  surfaceOffset: 0.6
   surfaceProbeDistance: 1.5
   wallDetectionDistance: 1.2
   edgeProbeDistance: 1.5
@@ -399,6 +401,31 @@ MonoBehaviour:
   surfaceNormalSpeed: 10
   lostSurfaceGravity: 15
   maximumRecoveryDistance: 3
+--- !u!114 &307249563640708125
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7173742020872733848}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9f88e9d936bd25845b651888c83d3836, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &1171948373167395600
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7173742020872733848}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a1640570284fb4942a03ea172d332230, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  appliedX: 90
 --- !u!1 &8423681588415135491
 GameObject:
   m_ObjectHideFlags: 0

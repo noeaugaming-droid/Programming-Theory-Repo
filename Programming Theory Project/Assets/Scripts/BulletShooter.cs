@@ -4,6 +4,20 @@ using UnityEngine;
 
 public class BulletShooter : MonoBehaviour
 {
+    #region Camera_And_Aiming_Variables
+    // Values and references used by this part of the script.
+    #endregion
+    #region Enemies_And_Spawning_Variables
+    // Values and references used by this part of the script.
+    #endregion
+    #region Combat_And_Health_Variables
+    // Values and references used by this part of the script.
+    #endregion
+    #region General_Variables
+    // Values and references used by this part of the script.
+    #endregion
+    #region Combat_And_Health_Variables
+    // Values and references used by this part of the script.
     [Header("Shooting")]
     [SerializeField] private Camera aimCamera;
     [SerializeField] private CameraLook cameraLook;
@@ -13,17 +27,32 @@ public class BulletShooter : MonoBehaviour
     [SerializeField] private float shootDelay = 0.25f;
     [SerializeField] private float damage = 20f;
 
+    #endregion
+    #region Physics_And_Movement_Variables
+    // Values and references used by this part of the script.
     [Header("Bullet Movement")]
     [SerializeField] private float bulletSpeed = 30f;
 
+    #endregion
+    #region Combat_And_Health_Variables
+    // Values and references used by this part of the script.
     [Header("Collision")]
     [SerializeField] private LayerMask hitLayers = ~0;
 
+    #endregion
+    #region General_Variables
+    // Values and references used by this part of the script.
     [Header("Debug")]
     [SerializeField] private bool showDebugRays = true;
 
+    #endregion
+    #region Combat_And_Health_Variables
+    // Values and references used by this part of the script.
     private bool canShoot = true;
 
+    #endregion
+    #region Unity_Lifecycle_Methods
+    // Methods Unity calls automatically during the object's lifetime.
     private void Awake()
     {
         if (aimCamera == null)
@@ -57,6 +86,9 @@ public class BulletShooter : MonoBehaviour
         }
     }
 
+    #endregion
+    #region Combat_And_Health_Methods
+    // Attacks, damage, and health-related behavior.
     private void Fire()
     {
         Vector3 aimPoint;
@@ -228,4 +260,5 @@ public class BulletShooter : MonoBehaviour
         yield return new WaitForSeconds(shootDelay);
         canShoot = true;
     }
+    #endregion
 }

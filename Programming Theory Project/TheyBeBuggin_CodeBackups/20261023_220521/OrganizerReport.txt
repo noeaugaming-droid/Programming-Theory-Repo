@@ -1,0 +1,32 @@
+THEY BE BUGGIN CODE ORGANIZER
+Backup: C:\Users\ckeah\Desktop\PC_Desktop\Art_Development\ArtDev_Unity\Unity_ProgrammingTheoryRepo\Programming Theory Project\TheyBeBuggin_CodeBackups\20261023_220521
+BACKED UP: Assets/Editor/GameDiagnostics.cs
+BACKED UP: Assets/Editor/ProjectScriptExporter.cs
+BACKED UP: Assets/Scripts/ArmAim.cs
+BACKED UP: Assets/Scripts/Beetle.cs
+BACKED UP: Assets/Scripts/BulletShooter.cs
+BACKED UP: Assets/Scripts/CameraFollow.cs
+BACKED UP: Assets/Scripts/CameraLook.cs
+BACKED UP: Assets/Scripts/CrosshairFollow.cs
+BACKED UP: Assets/Scripts/Enemy.cs
+BACKED UP: Assets/Scripts/EnemySpawner.cs
+BACKED UP: Assets/Scripts/EnemySurfaceCrawler.cs
+BACKED UP: Assets/Scripts/PlayerController.cs
+BACKED UP: Assets/Scripts/PlayerHealth.cs
+BACKED UP: Assets/Scripts/SpawnerSwitch.cs
+BACKED UP: Assets/Scripts/Spider.cs
+ORGANIZED: Assets/Editor/GameDiagnostics.cs (6 regions)
+ORGANIZED: Assets/Editor/ProjectScriptExporter.cs (1 regions)
+ORGANIZED: Assets/Scripts/ArmAim.cs (1 regions)
+ORGANIZED: Assets/Scripts/Beetle.cs (18 regions)
+ORGANIZED: Assets/Scripts/BulletShooter.cs (11 regions)
+ORGANIZED: Assets/Scripts/CameraFollow.cs (13 regions)
+ORGANIZED: Assets/Scripts/CameraLook.cs (5 regions)
+ORGANIZED: Assets/Scripts/CrosshairFollow.cs (4 regions)
+ORGANIZED: Assets/Scripts/Enemy.cs (5 regions)
+ORGANIZED: Assets/Scripts/EnemySpawner.cs (11 regions)
+ORGANIZED: Assets/Scripts/EnemySurfaceCrawler.cs (14 regions)
+ORGANIZED: Assets/Scripts/PlayerController.cs (26 regions)
+ORGANIZED: Assets/Scripts/PlayerHealth.cs (6 regions)
+ORGANIZED: Assets/Scripts/SpawnerSwitch.cs (1 regions)
+ORGANIZED: Assets/Scripts/Spider.cs (16 regions)
