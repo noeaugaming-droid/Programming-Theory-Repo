@@ -1,428 +1,134 @@
-
 using UnityEngine;
 using TMPro;
 
+// Spawns a wave in distributed directions around this spawner.
 public class EnemySpawner : MonoBehaviour
 {
-    #region Enemies_And_Spawning_Variables
-    // Values and references used by this part of the script.
-    [Header("Wave UI")]
+    #region Inspector_Variables
+    [Header("Wave UI and Prefabs")]
     [SerializeField] private TMP_Text waveText;
-
-    [Header("Enemy Prefabs")]
     [SerializeField] private GameObject spiderPrefab;
     [SerializeField] private GameObject beetlePrefab;
 
-    [Header("Wave Settings")]
-    [SerializeField] private float spawnRange = 10f;
-    [SerializeField] private int enemyCount = 3;
-    [SerializeField] private float waveDelay = 2f;
+    [Header("Spawn Radius (Unity Units)")]
+    [SerializeField, Min(1f)] private float spawnRange = 100f;
+    [SerializeField, Min(0f)] private float minimumSpawnRange = 25f;
+    [SerializeField, Min(1)] private int enemyCount = 15;
+    [SerializeField, Min(0.5f)] private float minimumEnemySpacing = 7f;
+    [SerializeField, Min(1)] private int attemptsPerEnemy = 24;
 
-    #endregion
-    #region Physics_And_Movement_Variables
-    // Values and references used by this part of the script.
-    #endregion
-    #region Enemies_And_Spawning_Variables
-    // Values and references used by this part of the script.
-    #endregion
-    #region Physics_And_Movement_Variables
-    // Values and references used by this part of the script.
-    #endregion
-    #region Enemies_And_Spawning_Variables
-    // Values and references used by this part of the script.
-    [Header("Safe Surface Spawning")]
+    [Header("Terrain Detection")]
     [SerializeField] private LayerMask spawnSurfaceLayers = ~0;
-    [SerializeField] private LayerMask obstructionLayers = ~0;
-    [SerializeField] private int attemptsPerEnemy = 40;
-    [SerializeField] private float surfaceClearance = 0.08f;
-    [SerializeField] private float overlapTolerance = 0.001f;
-
-    [Header("Diagnostics")]
-    [SerializeField] private bool logFailedSpawns = true;
-
-    private int waveNumber = 1;
+    [SerializeField, Min(1f)] private float rayStartHeight = 100f;
+    [SerializeField, Min(1f)] private float rayLength = 250f;
+    [SerializeField, Min(0f)] private float spawnSurfaceOffset = 0.7f;
+    [SerializeField, Range(0f, 1f)] private float minimumUpNormal = 0.45f;
     #endregion
-    #region Combat_And_Health_Variables
-    // Values and references used by this part of the script.
+
+    #region Private_Variables
+    private int waveNumber = 1;
     private PlayerHealth playerHealth;
     #endregion
-    #region Enemies_And_Spawning_Variables
-    // Values and references used by this part of the script.
-    private float nextWaveTime;
-    private bool waitingForNextWave;
 
-    #endregion
     #region Unity_Lifecycle_Methods
-    // Methods Unity calls automatically during the object's lifetime.
     private void Start()
     {
         playerHealth = FindAnyObjectByType<PlayerHealth>();
-
         SpawnWave();
     }
 
     private void Update()
     {
-        if (playerHealth != null && playerHealth.isDead)
-            return;
+        if (playerHealth == null || playerHealth.isDead) return;
+        if (Enemy.AliveCount != 0) return;
 
-        if (Enemy.AliveCount > 0)
-        {
-            waitingForNextWave = false;
-            return;
-        }
-
-        if (!waitingForNextWave)
-        {
-            waitingForNextWave = true;
-            nextWaveTime = Time.time + waveDelay;
-            return;
-        }
-
-        if (Time.time < nextWaveTime)
-            return;
-
-        waitingForNextWave = false;
-
+        int additionalEnemies = Mathf.Max(1, enemyCount / 2);
         waveNumber++;
-        enemyCount++;
-
-        Debug.Log("Wave Complete!");
-
+        enemyCount += additionalEnemies;
         SpawnWave();
     }
-
     #endregion
-    #region Enemies_And_Spawning_Methods
-    // Enemy behavior and spawning logic.
+
+    #region Spawning_Methods
     private void SpawnWave()
     {
-        if (waveText != null)
-            waveText.text = "Wave: " + waveNumber;
+        if (waveText != null) waveText.text = "Wave: " + waveNumber;
+        if (spiderPrefab == null && beetlePrefab == null)
+        {
+            Debug.LogError("EnemySpawner has no enemy prefabs assigned.", this);
+            return;
+        }
 
+        // Use sectors so the wave is spread around the spawner rather than clustered.
+        float startingAngle = Random.Range(0f, 360f);
+        Vector3[] selectedPositions = new Vector3[enemyCount];
         int spawned = 0;
-
         for (int i = 0; i < enemyCount; i++)
         {
-            GameObject prefab = ChooseEnemyPrefab();
-
-            if (prefab == null)
-                continue;
-
-            if (TrySpawnEnemy(prefab))
-                spawned++;
-        }
-
-        Debug.Log(
-            "Wave " + waveNumber +
-            ": spawned " + spawned +
-            " / " + enemyCount + " enemies."
-        );
-    }
-
-    private GameObject ChooseEnemyPrefab()
-    {
-        if (spiderPrefab == null)
-            return beetlePrefab;
-
-        if (beetlePrefab == null)
-            return spiderPrefab;
-
-        return Random.Range(0, 2) == 0
-            ? spiderPrefab
-            : beetlePrefab;
-    }
-
-    private bool TrySpawnEnemy(GameObject prefab)
-    {
-        int maxAttempts = Mathf.Max(1, attemptsPerEnemy);
-
-        for (int attempt = 0; attempt < maxAttempts; attempt++)
-        {
-            if (!TryFindSurface(out RaycastHit surfaceHit))
-                continue;
-
-            Vector3 normal = surfaceHit.normal.normalized;
-
-            Quaternion rotation =
-                CalculateSurfaceRotation(prefab, normal);
-
-            // Initially place the prefab on the surface.
-            // Its collider is then used to calculate
-            // the necessary distance away from it.
-            GameObject candidate = Instantiate(
-                prefab,
-                surfaceHit.point,
-                rotation
-            );
-
-            Collider[] colliders =
-                candidate.GetComponentsInChildren<Collider>();
-
-            if (colliders.Length == 0)
+            if (!TryFindSpawnPoint(i, enemyCount, startingAngle, selectedPositions, spawned,
+                out Vector3 spawnPosition, out Vector3 surfaceNormal))
             {
-                Debug.LogError(
-                    prefab.name +
-                    " has no enabled child or parent collider."
-                );
-
-                Destroy(candidate);
-                return false;
+                Debug.LogWarning("No safe spawn point found for enemy " + i, this);
+                continue;
             }
 
-            Physics.SyncTransforms();
+            GameObject prefab = ChoosePrefab();
+            if (prefab == null) continue;
 
-            float requiredOffset =
-                CalculateRequiredOffset(
-                    candidate,
-                    colliders,
-                    surfaceHit.point,
-                    normal
-                );
+            // Preserve prefab orientation; crawler aligns to the surface after spawning.
+            GameObject enemy = Instantiate(prefab, spawnPosition, prefab.transform.rotation);
+            EnemyApproachVariation variation = enemy.GetComponent<EnemyApproachVariation>();
+            if (variation == null) variation = enemy.AddComponent<EnemyApproachVariation>();
+            variation.Initialize(Random.Range(0, 2) == 0 ? -1 : 1,
+                Random.Range(0f, 1000f));
 
-            candidate.transform.position =
-                surfaceHit.point +
-                normal * (requiredOffset + surfaceClearance);
+            selectedPositions[spawned++] = spawnPosition;
+        }
+    }
 
-            Physics.SyncTransforms();
+    private GameObject ChoosePrefab()
+    {
+        if (spiderPrefab == null) return beetlePrefab;
+        if (beetlePrefab == null) return spiderPrefab;
+        return Random.value < 0.5f ? spiderPrefab : beetlePrefab;
+    }
 
-            if (IsSpawnPositionClear(candidate, colliders))
+    private bool TryFindSpawnPoint(int index, int total, float startAngle,
+        Vector3[] selected, int selectedCount, out Vector3 point, out Vector3 normal)
+    {
+        point = default;
+        normal = Vector3.up;
+        float outer = Mathf.Max(1f, spawnRange);
+        float inner = Mathf.Clamp(minimumSpawnRange, 0f, outer);
+        float sectorWidth = 360f / Mathf.Max(1, total);
+
+        for (int attempt = 0; attempt < attemptsPerEnemy; attempt++)
+        {
+            float angle = (startAngle + index * sectorWidth +
+                Random.Range(-sectorWidth * 0.4f, sectorWidth * 0.4f)) * Mathf.Deg2Rad;
+            float radius = Mathf.Sqrt(Random.Range(inner * inner, outer * outer));
+            Vector3 offset = new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle)) * radius;
+            Vector3 origin = transform.position + offset + Vector3.up * rayStartHeight;
+            if (!Physics.Raycast(origin, Vector3.down, out RaycastHit hit,
+                rayLength, spawnSurfaceLayers, QueryTriggerInteraction.Ignore)) continue;
+            if (hit.normal.y < minimumUpNormal) continue;
+            if (hit.collider.GetComponentInParent<Enemy>() != null) continue;
+
+            Vector3 candidate = hit.point + hit.normal * spawnSurfaceOffset;
+            bool tooClose = false;
+            for (int j = 0; j < selectedCount; j++)
             {
-                return true;
-            }
-
-            Destroy(candidate);
-        }
-
-        if (logFailedSpawns)
-        {
-            Debug.LogWarning(
-                "Could not find a safe spawn location for " +
-                prefab.name +
-                " after " + maxAttempts + " attempts."
-            );
-        }
-
-        return false;
-    }
-
-    #endregion
-    #region Physics_And_Movement_Methods
-    // Movement, jumping, collisions, and other physics behavior.
-    private bool TryFindSurface(out RaycastHit result)
-    {
-        result = default;
-
-        float range = Mathf.Max(1f, spawnRange);
-
-        // Cast through the spawn region from different
-        // directions, allowing floors, walls and ceilings.
-        Vector3 direction = Random.onUnitSphere;
-
-        Vector3 origin =
-            transform.position + direction * range;
-
-        Vector3 castDirection = -direction;
-
-        float castDistance = range * 2f;
-
-        RaycastHit[] hits = Physics.RaycastAll(
-            origin,
-            castDirection,
-            castDistance,
-            spawnSurfaceLayers,
-            QueryTriggerInteraction.Ignore
-        );
-
-        if (hits.Length == 0)
-            return false;
-
-        // Select a random valid surface along the ray.
-        int startIndex = Random.Range(0, hits.Length);
-
-        for (int i = 0; i < hits.Length; i++)
-        {
-            RaycastHit hit =
-                hits[(startIndex + i) % hits.Length];
-
-            if (hit.collider == null)
-                continue;
-
-            if (hit.collider.isTrigger)
-                continue;
-
-            // Do not spawn directly on an enemy.
-            if (hit.collider.GetComponentInParent<Enemy>()
-                != null)
-                continue;
-
-            result = hit;
-            return true;
-        }
-
-        return false;
-    }
-
-    private Quaternion CalculateSurfaceRotation(
-        GameObject prefab,
-        Vector3 normal)
-    {
-        Vector3 forward =
-            Vector3.ProjectOnPlane(
-                prefab.transform.forward,
-                normal
-            );
-
-        if (forward.sqrMagnitude < 0.001f)
-        {
-            forward = Vector3.ProjectOnPlane(
-                Vector3.forward,
-                normal
-            );
-        }
-
-        if (forward.sqrMagnitude < 0.001f)
-        {
-            forward = Vector3.ProjectOnPlane(
-                Vector3.right,
-                normal
-            );
-        }
-
-        return Quaternion.LookRotation(
-            forward.normalized,
-            normal
-        );
-    }
-
-    private float CalculateRequiredOffset(
-        GameObject candidate,
-        Collider[] colliders,
-        Vector3 surfacePoint,
-        Vector3 normal)
-    {
-        float offset = 0f;
-
-        foreach (Collider collider in colliders)
-        {
-            if (collider == null ||
-                !collider.enabled ||
-                collider.isTrigger)
-                continue;
-
-            Bounds bounds = collider.bounds;
-
-            // Bounds are world-space AABBs.
-            // This deliberately uses a conservative
-            // clearance for rotated colliders.
-            Vector3 extents = bounds.extents;
-
-            float projectedRadius =
-                Mathf.Abs(normal.x) * extents.x +
-                Mathf.Abs(normal.y) * extents.y +
-                Mathf.Abs(normal.z) * extents.z;
-
-            float centerDistance = Vector3.Dot(
-                bounds.center - surfacePoint,
-                normal
-            );
-
-            float needed =
-                projectedRadius - centerDistance;
-
-            offset = Mathf.Max(offset, needed);
-        }
-
-        return offset;
-    }
-
-    private bool IsSpawnPositionClear(
-        GameObject candidate,
-        Collider[] colliders)
-    {
-        foreach (Collider enemyCollider in colliders)
-        {
-            if (enemyCollider == null ||
-                !enemyCollider.enabled ||
-                enemyCollider.isTrigger)
-                continue;
-
-            Bounds bounds = enemyCollider.bounds;
-
-            Collider[] nearby = Physics.OverlapBox(
-                bounds.center,
-                bounds.extents +
-                    Vector3.one * 0.01f,
-                Quaternion.identity,
-                obstructionLayers,
-                QueryTriggerInteraction.Ignore
-            );
-
-            foreach (Collider obstacle in nearby)
-            {
-                if (obstacle == null ||
-                    !obstacle.enabled ||
-                    obstacle.isTrigger)
-                    continue;
-
-                // Ignore colliders belonging to
-                // the candidate itself.
-                if (obstacle.transform == candidate.transform ||
-                    obstacle.transform.IsChildOf(
-                        candidate.transform))
-                    continue;
-
-                if (Physics.ComputePenetration(
-                    enemyCollider,
-                    enemyCollider.transform.position,
-                    enemyCollider.transform.rotation,
-                    obstacle,
-                    obstacle.transform.position,
-                    obstacle.transform.rotation,
-                    out Vector3 direction,
-                    out float distance))
+                if (Vector3.Distance(candidate, selected[j]) < minimumEnemySpacing)
                 {
-                    if (distance > overlapTolerance)
-                        return false;
-                }
-                else
-                {
-                    // ComputePenetration does not support
-                    // every collider combination.
-                    // For unsupported types, conservatively
-                    // reject intersecting bounding boxes.
-                    if (!SupportsPenetrationTest(enemyCollider) ||
-                        !SupportsPenetrationTest(obstacle))
-                    {
-                        Bounds obstacleBounds = obstacle.bounds;
-
-                        if (bounds.Intersects(obstacleBounds))
-                            return false;
-                    }
+                    tooClose = true;
+                    break;
                 }
             }
+            if (tooClose) continue;
+            point = candidate;
+            normal = hit.normal;
+            return true;
         }
-
-        return true;
-    }
-
-    #endregion
-    #region Enemies_And_Spawning_Methods
-    // Enemy behavior and spawning logic.
-    private bool SupportsPenetrationTest(Collider collider)
-    {
-        if (collider is BoxCollider)
-            return true;
-
-        if (collider is SphereCollider)
-            return true;
-
-        if (collider is CapsuleCollider)
-            return true;
-
-        if (collider is MeshCollider mesh)
-            return mesh.convex;
-
         return false;
     }
     #endregion

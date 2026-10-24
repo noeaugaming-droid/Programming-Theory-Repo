@@ -276,6 +276,8 @@ GameObject:
   - component: {fileID: 8735315752466292506}
   - component: {fileID: 307249563640708125}
   - component: {fileID: 1171948373167395600}
+  - component: {fileID: -7299731995526955838}
+  - component: {fileID: 2959799893562206463}
   m_Layer: 7
   m_Name: Beetle
   m_TagString: Enemy
@@ -392,15 +394,22 @@ MonoBehaviour:
   climbableLayers:
     serializedVersion: 2
     m_Bits: 265
-  surfaceOffset: 0.6
-  surfaceProbeDistance: 1.5
-  wallDetectionDistance: 1.2
+  surfaceOffset: 0.75
+  surfaceProbeDistance: 2.44
+  wallDetectionDistance: 1.99
   edgeProbeDistance: 1.5
+  maximumSurfaceGap: 3.93
   rotationSpeed: 12
   surfaceSnapSpeed: 12
   surfaceNormalSpeed: 10
   lostSurfaceGravity: 15
   maximumRecoveryDistance: 3
+  obstacleProbeDistance: 1.4
+  enemyAvoidanceRadius: 1.3
+  stuckCheckInterval: 1
+  minimumProgress: 0.4
+  recoveryDuration: 2
+  edgeTurnSearchDistance: 1.2
 --- !u!114 &307249563640708125
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -426,6 +435,54 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   appliedX: 90
+--- !u!114 &-7299731995526955838
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7173742020872733848}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: deff878e66024d1409770a7bb03b25b8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  lateralInfluence: 0.65
+  directionChangeSeconds: 3.5
+  approachVariation: 0.35
+  closeRange: 5
+--- !u!114 &2959799893562206463
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7173742020872733848}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 76729025352f01d4ba97c51685909896, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  environmentLayers:
+    serializedVersion: 2
+    m_Bits: 265
+  obstacleDetectionDistance: 2.5
+  edgeDetectionDistance: 1.2
+  supportDetectionDistance: 2
+  rayOriginOffset: 0.25
+  scanInterval: 0.15
+  targetDirectionWeight: 2
+  obstaclePenalty: 4
+  gapPenalty: 5
+  separationWeight: 2
+  directionContinuityWeight: 0.6
+  blockedDirectionMemory: 2.5
+  minimumMovementProgress: 0.35
+  progressCheckInterval: 1
+  separationRadius: 1.75
+  enemyLayers:
+    serializedVersion: 2
+    m_Bits: 128
 --- !u!1 &8423681588415135491
 GameObject:
   m_ObjectHideFlags: 0
