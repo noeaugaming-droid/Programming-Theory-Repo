@@ -5474,7 +5474,6 @@ GameObject:
   - component: {fileID: 1118337978}
   - component: {fileID: 1118337981}
   - component: {fileID: 1118337980}
-  - component: {fileID: 1118337979}
   - component: {fileID: 1118337982}
   m_Layer: 8
   m_Name: Ground
@@ -5498,28 +5497,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 754635743}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!64 &1118337979
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1118337977}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
 --- !u!23 &1118337980
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -5592,8 +5569,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 10, y: 1, z: 10}
-  m_Center: {x: 0, y: -1, z: 0}
+  m_Size: {x: 10, y: 0.75, z: 10}
+  m_Center: {x: 0, y: -0.3, z: 0}
 --- !u!1001 &1129287742
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -9564,13 +9541,13 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2138620844}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4fc1c210cf321e74396a23e1f797f346, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   waveText: {fileID: 1592840253}
-  spiderPrefab: {fileID: 3445917376494882868, guid: 36c9b79ac240ca043be41c8d9b02bb2c, type: 3}
+  spiderPrefab: {fileID: 8256026944962493952, guid: 306c5bc5ceed4654fa3046a2d7cbc8c2, type: 3}
   beetlePrefab: {fileID: 7173742020872733848, guid: 63d73f94096b38048b9715bbae36ac01, type: 3}
   spawnRange: 100
   minimumSpawnRange: 25
@@ -9596,8 +9573,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a54623adb0720b243862eaf0f3c09744, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  baseFloor: {fileID: 1118337979}
-  spiderPrefab: {fileID: 3445917376494882868, guid: 36c9b79ac240ca043be41c8d9b02bb2c, type: 3}
+  baseFloor: {fileID: 0}
+  spiderPrefab: {fileID: 8256026944962493952, guid: 306c5bc5ceed4654fa3046a2d7cbc8c2, type: 3}
   beetlePrefab: {fileID: 7173742020872733848, guid: 63d73f94096b38048b9715bbae36ac01, type: 3}
   waveText: {fileID: 1592840253}
   spawnRange: 100

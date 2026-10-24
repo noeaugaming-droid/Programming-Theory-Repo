@@ -1,0 +1,6 @@
+Ready: Assets/Scripts/EnemySurfaceCrawler.cs
+Original SHA256: B9C833529E5DD508
+Replacement SHA256: 327FA2F337FFD7BA
+
+Changes: collision pose checks, penetration recovery, shape-aware jump sampling, safe rotation, surface reacquisition.
+Preserves Spider/Beetle API and Inspector field names.
